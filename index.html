@@ -434,7 +434,7 @@
         <button class="engine-tab" data-engine="browser" onclick="selectEngine('browser')">Browser</button>
         <button class="engine-tab" data-engine="piper" onclick="selectEngine('piper')">Piper</button>
         <button class="engine-tab" data-engine="kokoro" onclick="selectEngine('kokoro')">Kokoro</button>
-        <button class="engine-tab" data-engine="espeak" onclick="selectEngine('espeak')">eSpeak-NG</button>
+        <button class="engine-tab" data-engine="espeak" onclick="selectEngine('espeak')">eSpeak</button>
       </div>
       <div class="engine-desc" id="engine-desc"></div>
 
@@ -517,11 +517,15 @@ function populateVoiceSelects(){
   if(!('speechSynthesis' in window)) return;
   const all = window.speechSynthesis.getVoices();
   if(!all.length) return;
-  // Only English voices — a laptop/desktop browser can otherwise report hundreds
-  // of installed system voices across every language, which is unnecessary weight
-  // and made the voice dropdown noticeably slow to build.
-  ttsVoices = all.filter(v => /^en/i.test(v.lang));
-  if(!ttsVoices.length) ttsVoices = all; // fallback if the device has no English voice at all
+  // Keep this short and fast: only US and Indian English, max 5 voices each, instead of
+  // every language/locale a desktop browser might report (sometimes 200+).
+  const norm = v => v.lang.replace('_','-').toLowerCase();
+  const rank = v => (v.default?0:1) + (v.localService?0:2); // prefer default/local voices first
+  const usVoices = all.filter(v=>norm(v).startsWith('en-us')).sort((a,b)=>rank(a)-rank(b)).slice(0,5);
+  const inVoices = all.filter(v=>norm(v).startsWith('en-in')).sort((a,b)=>rank(a)-rank(b)).slice(0,5);
+  ttsVoices = [...usVoices, ...inVoices];
+  if(!ttsVoices.length) ttsVoices = all.filter(v=>/^en/i.test(v.lang)).slice(0,10); // fallback: any English
+  if(!ttsVoices.length) ttsVoices = all.slice(0,10); // last resort: device has no English voice at all
 }
 function setVoice(uri){
   selectedVoiceURI = uri;
@@ -648,7 +652,7 @@ const ENGINE_INFO = {
   browser: {label:'Browser', desc:'Your device\'s built-in text-to-speech (Web Speech API). Zero download, works instantly, quality varies by phone.'},
   piper: {label:'Piper', desc:'Rhasspy Piper (MIT). Lightweight ONNX voices, ~20\u201360MB per voice downloaded once and cached. Clear, slightly synthetic sound, runs on plain WASM \u2014 no WebGPU needed.'},
   kokoro: {label:'Kokoro', desc:'Kokoro-82M (Apache-2.0). The most natural-sounding of the bunch. Bigger download (~80MB+ quantized) and needs more CPU/GPU \u2014 best on newer phones.'},
-  espeak: {label:'eSpeak-NG', desc:'Classic formant synthesizer (GPL). Tiny (~2MB), instant, robotic \u201cSpeak & Spell\u201d voice \u2014 good fallback, not a quality upgrade.'}
+  espeak: {label:'eSpeak', desc:'Classic eSpeak formant synthesizer via mespeak.js (GPL). Tiny (~1MB), instant, robotic \u201cSpeak & Spell\u201d voice \u2014 good fallback, not a quality upgrade.'}
 };
 const ENGINE_VOICES = {
   piper: [
@@ -666,8 +670,8 @@ const ENGINE_VOICES = {
   ],
   espeak: [
     {id:'en-us', label:'English (US)'},
-    {id:'en-us+f3', label:'English (US, female)'},
-    {id:'en-gb', label:'English (UK)'}
+    {id:'en-rp', label:'English (UK, RP)'},
+    {id:'en-sc', label:'English (Scottish)'}
   ]
 };
 
@@ -680,15 +684,20 @@ if(!engineVoiceId.espeak) engineVoiceId.espeak = ENGINE_VOICES.espeak[0].id;
 const engineModules = {};   // cached loaded module/instance per engine
 const engineLoading = {};   // in-flight load promises per engine
 
+const loadedMespeakVoices = new Set();
+const MESPEAK_BASE = 'https://cdn.jsdelivr.net/npm/mespeak@2.0.2/';
+const MESPEAK_VOICE_FILES = {'en-us':'voices/en/en-us.json', 'en-rp':'voices/en/en-rp.json', 'en-sc':'voices/en/en-sc.json'};
+
 function loadEngineModule(engine){
   if(engineModules[engine]) return Promise.resolve(engineModules[engine]);
   if(engineLoading[engine]) return engineLoading[engine];
   let p;
   if(engine==='piper'){
-    p = import('https://esm.sh/@mintplex-labs/piper-tts-web@1.0.5?bundle')
-      .catch(err=>{ throw new Error('[import] Piper library failed to load from CDN: '+describeErr(err)); })
+    // The mintplex-labs fork + esm.sh combo is known to break (broken onnxruntime-web CDN path +
+    // esm.sh polyfill issues). The original @diffusionstudio/vits-web via jsDelivr's +esm avoids both.
+    p = import('https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm')
+      .catch(err=>{ throw new Error('[import] Piper (vits-web) library failed to load from CDN: '+describeErr(err)); })
       .then(mod=>{
-        // handle CJS/ESM interop: predict() may live on the module itself or on mod.default
         const api = (mod && typeof mod.predict==='function') ? mod
                   : (mod && mod.default && typeof mod.default.predict==='function') ? mod.default
                   : null;
@@ -696,7 +705,7 @@ function loadEngineModule(engine){
         engineModules[engine]=api; return api;
       });
   } else if(engine==='kokoro'){
-    p = import('https://esm.sh/kokoro-js@1.2.1?bundle')
+    p = import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm')
       .catch(err=>{ throw new Error('[import] Kokoro library failed to load from CDN: '+describeErr(err)); })
       .then(async mod=>{
         const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS);
@@ -712,15 +721,23 @@ function loadEngineModule(engine){
         return inst;
       });
   } else if(engine==='espeak'){
-    p = import('https://esm.sh/espeak-ng@1.0.2?bundle')
-      .catch(err=>{ throw new Error('[import] eSpeak-NG library failed to load from CDN: '+describeErr(err)); })
-      .then(mod=>{
-        const factory = (typeof mod==='function') ? mod
-                      : (typeof mod.default==='function') ? mod.default
-                      : null;
-        if(!factory) throw new Error('[import] eSpeak-NG module loaded but no callable factory export was found.');
-        engineModules[engine] = factory;
-        return factory;
+    // The official "espeak-ng" npm package turned out to be compiled Node-only (confirmed by its own
+    // runtime error). mespeak.js is the classic eSpeak-in-the-browser port that's been used in real
+    // browsers for over a decade, so we use that instead for a genuinely working lightweight fallback.
+    p = import('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/+esm')
+      .catch(err=>{ throw new Error('[import] mespeak library failed to load from CDN: '+describeErr(err)); })
+      .then(async mod=>{
+        const meSpeak = (mod && typeof mod.speak==='function') ? mod
+                       : (mod && mod.default && typeof mod.default.speak==='function') ? mod.default
+                       : null;
+        if(!meSpeak) throw new Error('[import] mespeak module loaded but no speak() function found on it.');
+        try{
+          await new Promise((resolve,reject)=>{
+            meSpeak.loadConfig(MESPEAK_BASE+'src/mespeak_config.json', (ok)=> ok ? resolve() : reject(new Error('mespeak config did not load')));
+          });
+        }catch(err){ throw new Error('[model download/init] mespeak config failed to load: '+describeErr(err)); }
+        engineModules[engine] = meSpeak;
+        return meSpeak;
       });
   } else {
     return Promise.reject(new Error('Unknown engine: '+engine));
@@ -767,13 +784,22 @@ async function synthesizeWithEngine(engine, text){
     return encodeWav(audio.audio, audio.sampling_rate || audio.sample_rate || 24000);
   }
   if(engine==='espeak'){
-    const factory = await loadEngineModule('espeak');
-    const safe = text.replace(/["']/g,'');
+    const meSpeak = await loadEngineModule('espeak');
+    const voiceId = engineVoiceId.espeak;
+    const voiceFile = MESPEAK_VOICE_FILES[voiceId] || MESPEAK_VOICE_FILES['en-us'];
     try{
-      const instance = await factory({arguments:['-v', engineVoiceId.espeak, '-w','out.wav','-q', safe]});
-      const bytes = instance.FS.readFile('out.wav');
-      return new Blob([bytes], {type:'audio/wav'});
-    }catch(err){ throw new Error('[inference] eSpeak-NG synthesis failed: '+describeErr(err)); }
+      // Reload the selected voice right before speaking (cheap, small JSON) so we never have to
+      // guess mespeak's internal voice-id string format — it just uses whichever voice loaded last.
+      await new Promise((resolve,reject)=>{
+        meSpeak.loadVoice(MESPEAK_BASE+voiceFile, (ok)=> ok ? resolve() : reject(new Error('voice failed to load: '+voiceId)));
+      });
+    }catch(err){ throw new Error('[model download/init] mespeak voice failed to load: '+describeErr(err)); }
+    let bytes;
+    try{
+      bytes = meSpeak.speak(text, {rawdata:'array'});
+    }catch(err){ throw new Error('[inference] mespeak synthesis failed: '+describeErr(err)); }
+    if(!bytes || !bytes.length) throw new Error('[inference] mespeak returned no audio data.');
+    return new Blob([new Uint8Array(bytes)], {type:'audio/wav'});
   }
   throw new Error('Unknown engine: '+engine);
 }
