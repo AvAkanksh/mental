@@ -180,21 +180,47 @@
   .keypad button:disabled{visibility:hidden;}
 
   /* Results */
-  .results-hero{text-align:center; margin:14px 0 14px; flex-shrink:0;}
+  .results-hero{text-align:center; margin:10px 0 12px; flex-shrink:0;}
   .results-score{font-size:52px; font-weight:800; color:var(--accent);}
   .results-sub{color:var(--text-dim); font-size:14px; margin-top:4px;}
-  .stat-grid{display:flex; gap:10px; margin-bottom:14px; flex-shrink:0;}
+  .stat-grid{display:flex; gap:10px; margin-bottom:16px; flex-shrink:0;}
   .stat-box{flex:1; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:13px; text-align:center;}
   .stat-box .num{font-size:20px; font-weight:800;}
   .stat-box .lbl{font-size:11.5px; color:var(--text-dim); margin-top:3px;}
-  .review-list{display:flex; flex-direction:column; gap:7px;}
-  .review-item{
-    display:flex; justify-content:space-between; align-items:center; background:var(--card);
-    border:1px solid var(--card-border); border-radius:12px; padding:10px 14px; font-size:13.5px;
-  }
-  .review-item .badge{font-weight:700; font-size:11.5px; padding:4px 9px; border-radius:10px;}
-  .badge.ok{background:rgba(166,255,77,.15); color:var(--accent);}
-  .badge.no{background:rgba(255,93,93,.15); color:var(--danger);}
+
+  .chart-card{background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-lg); padding:14px; margin-bottom:16px;}
+  .chart-svg{width:100%; height:104px; display:block; overflow:visible;}
+  .qa-baseline{stroke:var(--card-border); stroke-width:0.5;}
+  .qa-bar{transition:opacity .15s;}
+  .qa-bar.ok{fill:var(--accent);}
+  .qa-bar.no{fill:var(--danger);}
+  .qa-bar.skip{fill:var(--text-dim);}
+  .chart-legend{display:flex; gap:16px; margin-top:10px; flex-wrap:wrap;}
+  .legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-dim); font-weight:600;}
+  .legend-dot{width:8px; height:8px; border-radius:2px; flex-shrink:0;}
+  .legend-dot.ok{background:var(--accent);}
+  .legend-dot.no{background:var(--danger);}
+  .legend-dot.skip{background:var(--text-dim);}
+
+  .qa-list{display:flex; flex-direction:column; gap:8px;}
+  .qa-card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:12px 14px;}
+  .qa-card.no{border-color:rgba(255,93,93,0.3);}
+  .qa-card.skip{border-color:rgba(143,143,143,0.3);}
+  .qa-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px;}
+  .qa-num{font-size:11.5px; font-weight:700; color:var(--text-dim); letter-spacing:0.04em;}
+  .qa-time{font-size:11.5px; color:var(--text-dim); font-variant-numeric:tabular-nums;}
+  .qa-seq{display:flex; flex-wrap:wrap; gap:3px 9px; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; margin-bottom:9px;}
+  .qa-seq .neg{color:var(--danger);}
+  .qa-problem{font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; margin-bottom:9px;}
+  .qa-answer-row{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .qa-answer-text{font-size:13px; color:var(--text-mid);}
+  .qa-answer-text b{color:var(--text); font-weight:700;}
+  .qa-status{display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:4px 9px; border-radius:10px; flex-shrink:0; white-space:nowrap;}
+  .qa-status svg{width:11px; height:11px;}
+  .qa-status.ok{background:rgba(166,255,77,.15); color:var(--accent);}
+  .qa-status.no{background:rgba(255,93,93,.15); color:var(--danger);}
+  .qa-status.skip{background:rgba(143,143,143,.18); color:var(--text-dim);}
+
   .results-actions{display:flex; gap:10px; padding-top:10px; flex-shrink:0;}
   .results-actions button{flex:1;}
 
@@ -394,11 +420,23 @@
         <div class="results-score" id="results-score">0/0</div>
         <div class="results-sub" id="results-sub">correct answers</div>
       </div>
+      <div class="chip-row" id="results-chips"></div>
       <div class="stat-grid">
         <div class="stat-box"><div class="num" id="stat-accuracy">0%</div><div class="lbl">Accuracy</div></div>
         <div class="stat-box"><div class="num" id="stat-avgtime">0s</div><div class="lbl">Avg time</div></div>
+        <div class="stat-box"><div class="num" id="stat-streak">0</div><div class="lbl">Best streak</div></div>
       </div>
-      <div class="review-list" id="review-list"></div>
+      <div class="section-label" style="margin-top:0;">TIME PER QUESTION</div>
+      <div class="chart-card">
+        <div id="results-chart"></div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="legend-dot ok"></span>Correct</div>
+          <div class="legend-item"><span class="legend-dot no"></span>Wrong</div>
+          <div class="legend-item"><span class="legend-dot skip"></span>Skipped</div>
+        </div>
+      </div>
+      <div class="section-label" style="margin-top:0;">QUESTION BREAKDOWN</div>
+      <div class="qa-list" id="qa-list"></div>
     </div>
     <div class="results-actions">
       <button class="btn-ghost" onclick="go('home')">Home</button>
@@ -1044,7 +1082,8 @@ function resolveQuestion(correct, given){
   session.results.push({
     correct, given: (given===undefined?null:given), answer: session.current.answer,
     time: ((Date.now()-session.startTime)/1000).toFixed(1),
-    problem: kind==='mult' ? `${session.current.a}×${session.current.b}` : undefined
+    problem: kind==='mult' ? `${session.current.a}×${session.current.b}` : undefined,
+    seq: kind==='fa' ? session.current.seq.slice() : undefined
   });
   track(setTimeout(()=>{
     session.qIndex++;
@@ -1056,16 +1095,13 @@ function resolveQuestion(correct, given){
 
 /* ---------- Flash Anzan ---------- */
 function startFlashAnzan(fromReplay){
+  const chips = [faSettings.sub?'Add/Sub':'Addition', faSettings.digits+' Digits', faSettings.speed+'ms Speed', faSettings.count+' Numbers'];
   if(!fromReplay){
-    saveRecent({
-      kind:'fa', title:'Flash Anzan',
-      chips:[faSettings.sub?'Add/Sub':'Addition', faSettings.digits+' Digits', faSettings.speed+'ms Speed', faSettings.count+' Numbers'],
-      settings:{...faSettings}
-    });
+    saveRecent({kind:'fa', title:'Flash Anzan', chips, settings:{...faSettings}});
   }
   if(faSettings.voice) loadPiper().catch(()=>{});
   if(faSettings.voiceInput) primeMicPermission();
-  session = {kind:'fa', qIndex:0, total:faSettings.questions, results:[], resolved:true};
+  session = {kind:'fa', qIndex:0, total:faSettings.questions, results:[], resolved:true, chips};
   go('fa-practice');
   runFaQuestion();
 }
@@ -1134,16 +1170,13 @@ function runFaQuestion(){
 
 /* ---------- Multiplication ---------- */
 function startMultiplication(fromReplay){
+  const chips = [multSettings.digitsA+'×'+multSettings.digitsB+' digits', multSettings.time+'s / question', multSettings.questions+' Questions'];
   if(!fromReplay){
-    saveRecent({
-      kind:'mult', title:'Multiplication',
-      chips:[multSettings.digitsA+'×'+multSettings.digitsB+' digits', multSettings.time+'s / question', multSettings.questions+' Questions'],
-      settings:{...multSettings}
-    });
+    saveRecent({kind:'mult', title:'Multiplication', chips, settings:{...multSettings}});
   }
   if(multSettings.voice) loadPiper().catch(()=>{});
   if(multSettings.voiceInput) primeMicPermission();
-  session = {kind:'mult', qIndex:0, total:multSettings.questions, results:[], resolved:true};
+  session = {kind:'mult', qIndex:0, total:multSettings.questions, results:[], resolved:true, chips};
   go('mult-practice');
   runMultQuestion();
 }
@@ -1166,6 +1199,55 @@ function runMultQuestion(){
 }
 
 /* ---------- Results ---------- */
+const QA_ICONS = {
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg>',
+  no: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  skip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14"/></svg>'
+};
+const QA_LABELS = {ok:'Correct', no:'Wrong', skip:'Skipped'};
+function qaStatus(r){ return r.correct ? 'ok' : (r.given===null ? 'skip' : 'no'); }
+
+/* A compact bar-per-question chart of time taken, colored by outcome. Percentage-based
+   viewBox so it scales with the card's width with no layout measurement needed. */
+function buildResultsChart(results){
+  const n = results.length;
+  const maxTime = Math.max(...results.map(r=>parseFloat(r.time)), 0.1);
+  const svgW = 100, svgH = 40, baseline = 34, topPad = 3;
+  const slot = svgW / n;
+  const barW = Math.min(slot * 0.6, 6);
+  const bars = results.map((r,i)=>{
+    const h = Math.max(1.5, (parseFloat(r.time) / maxTime) * (baseline - topPad));
+    const x = (i * slot + (slot - barW) / 2).toFixed(2);
+    const y = (baseline - h).toFixed(2);
+    return `<rect class="qa-bar ${qaStatus(r)}" x="${x}" y="${y}" width="${barW.toFixed(2)}" height="${h.toFixed(2)}" rx="1"/>`;
+  }).join('');
+  return `<svg class="chart-svg" viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none">`
+    + `<line class="qa-baseline" x1="0" y1="${baseline}" x2="${svgW}" y2="${baseline}"/>${bars}</svg>`;
+}
+
+/* Every question at once (not paged one-at-a-time): for Flash Anzan, the full flashed
+   sequence; for Multiplication, the problem. Always shows what was given vs. the correct
+   answer, with a distinct state for a skipped (timed-out, no answer) question. */
+function buildQaList(session){
+  return session.results.map((r,i)=>{
+    const status = qaStatus(r);
+    let answerText;
+    if(status==='ok') answerText = `Answer <b>${r.answer}</b>`;
+    else if(status==='no') answerText = `You said <b>${r.given}</b> &middot; correct <b>${r.answer}</b>`;
+    else answerText = `No answer &middot; correct <b>${r.answer}</b>`;
+    const body = session.kind==='fa'
+      ? `<div class="qa-seq">${r.seq.map(v=>`<span class="${v<0?'neg':''}">${v<0?'−':'+'}${Math.abs(v)}</span>`).join('')}</div>`
+      : `<div class="qa-problem">${r.problem}</div>`;
+    return `<div class="qa-card ${status}">
+        <div class="qa-top"><div class="qa-num">Q${i+1}</div><div class="qa-time">${r.time}s</div></div>
+        ${body}
+        <div class="qa-answer-row">
+          <div class="qa-answer-text">${answerText}</div>
+          <div class="qa-status ${status}">${QA_ICONS[status]}${QA_LABELS[status]}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
 function finishSession(){
   const correctCount = session.results.filter(r=>r.correct).length;
   document.getElementById('results-title').textContent = session.kind==='fa'?'Flash Anzan':'Multiplication';
@@ -1174,12 +1256,12 @@ function finishSession(){
   document.getElementById('stat-accuracy').textContent = Math.round(correctCount/session.total*100)+'%';
   const avgTime = (session.results.reduce((s,r)=>s+parseFloat(r.time),0)/session.results.length).toFixed(1);
   document.getElementById('stat-avgtime').textContent = avgTime+'s';
-  const rl = document.getElementById('review-list');
-  rl.innerHTML = session.results.map((r,i)=>`
-    <div class="review-item">
-      <span>${r.problem?r.problem:'Q'+(i+1)} — answer ${r.answer}</span>
-      <span class="badge ${r.correct?'ok':'no'}">${r.correct?'Correct':(r.given===null?'Skipped':'Got '+r.given)}</span>
-    </div>`).join('');
+  let streak=0, bestStreak=0;
+  session.results.forEach(r=>{ if(r.correct){ streak++; bestStreak=Math.max(bestStreak,streak); } else streak=0; });
+  document.getElementById('stat-streak').textContent = bestStreak;
+  document.getElementById('results-chips').innerHTML = (session.chips||[]).map(c=>`<div class="chip">${c}</div>`).join('');
+  document.getElementById('results-chart').innerHTML = buildResultsChart(session.results);
+  document.getElementById('qa-list').innerHTML = buildQaList(session);
   go('results');
 }
 function retrySession(){
