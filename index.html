@@ -515,25 +515,19 @@ let selectedVoiceURI = localStorage.getItem('voiceURI') || '';
 
 function populateVoiceSelects(){
   if(!('speechSynthesis' in window)) return;
-  ttsVoices = window.speechSynthesis.getVoices();
-  if(!ttsVoices.length) return;
-  const opts = '<option value="">Default</option>' + ttsVoices.map(v=>
-    `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`
-  ).join('');
-  ['fa-voice-select','mult-voice-select'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.innerHTML = opts;
-    el.value = selectedVoiceURI;
-  });
+  const all = window.speechSynthesis.getVoices();
+  if(!all.length) return;
+  // Only English voices — a laptop/desktop browser can otherwise report hundreds
+  // of installed system voices across every language, which is unnecessary weight
+  // and made the voice dropdown noticeably slow to build.
+  ttsVoices = all.filter(v => /^en/i.test(v.lang));
+  if(!ttsVoices.length) ttsVoices = all; // fallback if the device has no English voice at all
 }
 function setVoice(uri){
   selectedVoiceURI = uri;
   localStorage.setItem('voiceURI', uri);
-  ['fa-voice-select','mult-voice-select'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.value = uri;
-  });
+  const el = document.getElementById('lab-voice-select');
+  if(el && ttsEngine==='browser') el.value = uri;
 }
 if('speechSynthesis' in window){
   window.speechSynthesis.onvoiceschanged = populateVoiceSelects;
@@ -811,15 +805,14 @@ function selectEngine(engine, skipSave){
   sel.innerHTML='';
   if(engine==='browser'){
     populateVoiceSelects();
-    (ttsVoices.length ? ttsVoices : []).forEach(v=>{
-      const o=document.createElement('option'); o.value=v.voiceURI; o.textContent=`${v.name} (${v.lang})`; sel.appendChild(o);
-    });
-    const def=document.createElement('option'); def.value=''; def.textContent='Default'; sel.prepend(def);
+    sel.innerHTML = '<option value="">Default</option>' + ttsVoices.map(v=>
+      `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`
+    ).join('');
     sel.value = selectedVoiceURI;
   } else {
-    (ENGINE_VOICES[engine]||[]).forEach(v=>{
-      const o=document.createElement('option'); o.value=v.id; o.textContent=v.label; sel.appendChild(o);
-    });
+    sel.innerHTML = (ENGINE_VOICES[engine]||[]).map(v=>
+      `<option value="${v.id}">${v.label}</option>`
+    ).join('');
     sel.value = engineVoiceId[engine];
   }
   if(!skipSave){ ttsEngine = engine; document.getElementById('lab-status').textContent=''; document.getElementById('lab-status').className='lab-status'; }
