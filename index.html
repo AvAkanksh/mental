@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>Flash Math — Quant Drill</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --card:#151515;
+    --card-border:#262626;
+    --chip:#1f1f1f;
+    --chip-border:#2c2c2c;
+    --text:#f2f2f2;
+    --text-dim:#8f8f8f;
+    --text-mid:#c4c4c4;
+    --accent:#a6ff4d;
+    --accent-dim:#7fce38;
+    --danger:#ff5d5d;
+    --grad-a:#8c5aff;
+    --grad-b:#4a7cff;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    overflow-x:hidden; user-select:none;
+  }
+  #app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+  .view{display:none; flex-direction:column; flex:1; padding:18px 18px calc(24px + env(safe-area-inset-bottom));}
+  .view.active{display:flex;}
+  .topbar{display:flex; align-items:center; gap:14px; padding-top:6px; margin-bottom:6px;}
+  .backbtn{
+    width:46px; height:46px; border-radius:14px; background:var(--chip);
+    border:1px solid var(--chip-border); display:flex; align-items:center; justify-content:center;
+    color:var(--text); font-size:20px; flex-shrink:0;
+  }
+  .topbar h1{font-size:26px; margin:0; font-weight:700; letter-spacing:-0.02em;}
+  .subtitle{color:var(--text-dim); font-size:14px; margin:2px 0 18px 2px;}
+
+  /* Home */
+  .hero{margin:10px 2px 22px;}
+  .hero .kicker{color:var(--text-dim); font-size:14px; margin-bottom:4px;}
+  .hero h1{font-size:32px; margin:0; font-weight:800; letter-spacing:-0.03em; line-height:1.1;}
+  .hero .accent{color:var(--accent);}
+  .mode-grid{display:flex; flex-direction:column; gap:14px;}
+  .mode-card{
+    background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-lg);
+    padding:20px; display:flex; align-items:center; gap:16px; cursor:pointer;
+  }
+  .mode-card:active{transform:scale(0.98);}
+  .mode-icon{
+    width:52px; height:52px; border-radius:16px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    background:linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  }
+  .mode-info h3{margin:0 0 3px; font-size:17px; font-weight:700;}
+  .mode-info p{margin:0; font-size:13px; color:var(--text-dim); line-height:1.4;}
+  .mode-arrow{margin-left:auto; color:var(--text-dim); font-size:20px;}
+
+  .section-label{font-size:13px; color:var(--text-dim); margin:26px 2px 10px; font-weight:600;}
+  .recent-card{
+    background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-lg);
+    padding:18px; margin-bottom:12px;
+  }
+  .recent-title{font-weight:700; font-size:16px; margin-bottom:12px;}
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .chip{background:var(--chip); border:1px solid var(--chip-border); color:var(--text-mid);
+    font-size:13px; padding:7px 13px; border-radius:20px;}
+  .row-end{display:flex; justify-content:flex-end;}
+  .btn-primary{
+    background:var(--accent); color:#0a0a0a; border:none; font-weight:700; font-size:15px;
+    padding:12px 26px; border-radius:24px;
+  }
+  .btn-primary:active{background:var(--accent-dim);}
+  .btn-ghost{
+    background:transparent; color:var(--accent); border:1.5px solid var(--accent);
+    font-weight:700; font-size:15px; padding:11px 24px; border-radius:24px;
+  }
+  .empty-hint{color:var(--text-dim); font-size:14px; text-align:center; padding:18px 6px;}
+
+  /* Setup */
+  .setting-row{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 2px;
+    border-bottom:1px solid var(--card-border);
+  }
+  .setting-row:last-of-type{border-bottom:none;}
+  .setting-label{font-size:15.5px; font-weight:500;}
+  .setting-sub{font-size:12px; color:var(--text-dim); margin-top:2px;}
+  .stepper{display:flex; align-items:center; gap:0; background:var(--chip); border:1px solid var(--chip-border); border-radius:12px; overflow:hidden;}
+  .stepper button{
+    width:38px; height:38px; background:transparent; border:none; color:var(--text);
+    font-size:18px; font-weight:700;
+  }
+  .stepper button:active{background:#2a2a2a;}
+  .stepper .val{min-width:44px; text-align:center; font-weight:700; font-size:15px;}
+  .toggle{width:48px; height:28px; border-radius:16px; background:var(--chip); border:1px solid var(--chip-border); position:relative; flex-shrink:0;}
+  .toggle .knob{position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--text-dim); transition:all .15s;}
+  .toggle.on{background:rgba(166,255,77,0.18); border-color:var(--accent-dim);}
+  .toggle.on .knob{left:22px; background:var(--accent);}
+  .setup-scroll{flex:1; overflow-y:auto;}
+  .start-bar{padding-top:18px;}
+  .start-bar .btn-primary{width:100%; padding:15px; font-size:16px;}
+
+  /* Practice */
+  .practice-view{justify-content:flex-start; padding-top:6px;}
+  .practice-top{display:flex; justify-content:space-between; align-items:center;}
+  .qcount{font-size:16px; color:var(--text-mid); font-weight:600;}
+  .flash-stage{
+    flex:1; display:flex; align-items:center; justify-content:center; min-height:40vh;
+  }
+  .flash-number{
+    font-size:96px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em;
+  }
+  .flash-number.neg{color:var(--danger);}
+  .flash-number.pos{color:var(--text);}
+  .mult-problem{font-size:56px; font-weight:800; text-align:center; letter-spacing:-0.01em;}
+  .countdown-block{text-align:center; margin-bottom:18px;}
+  .countdown-label{color:var(--text-dim); font-size:14px; margin-bottom:6px;}
+  .countdown-num{font-size:44px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums;}
+  .answer-label{text-align:center; color:var(--text-dim); font-size:12.5px; letter-spacing:0.08em; margin-bottom:10px; font-weight:700;}
+  .answer-box{
+    background:var(--chip); border:2px solid var(--chip-border); border-radius:16px;
+    padding:16px; text-align:center; font-size:28px; font-weight:700; min-height:26px;
+    margin:0 0 20px; letter-spacing:0.02em;
+  }
+  .answer-box.correct{border-color:var(--accent); color:var(--accent);}
+  .answer-box.wrong{border-color:var(--danger); color:var(--danger);}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:auto;}
+  .keypad button{
+    background:var(--chip); border:1px solid var(--chip-border); color:var(--text);
+    font-size:24px; font-weight:600; padding:18px 0; border-radius:14px;
+  }
+  .keypad button:active{background:#2a2a2a;}
+  .keypad .go{background:var(--accent); color:#0a0a0a; font-weight:800; font-size:16px;}
+  .keypad .neg-toggle{color:var(--accent);}
+
+  /* Results */
+  .results-hero{text-align:center; margin:30px 0 20px;}
+  .results-score{font-size:64px; font-weight:800; color:var(--accent);}
+  .results-sub{color:var(--text-dim); font-size:15px; margin-top:6px;}
+  .stat-grid{display:flex; gap:12px; margin-bottom:22px;}
+  .stat-box{flex:1; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:16px; text-align:center;}
+  .stat-box .num{font-size:22px; font-weight:800;}
+  .stat-box .lbl{font-size:12px; color:var(--text-dim); margin-top:4px;}
+  .review-list{display:flex; flex-direction:column; gap:8px; margin-bottom:20px;}
+  .review-item{
+    display:flex; justify-content:space-between; align-items:center; background:var(--card);
+    border:1px solid var(--card-border); border-radius:12px; padding:12px 16px; font-size:14px;
+  }
+  .review-item .badge{font-weight:700; font-size:12px; padding:4px 10px; border-radius:10px;}
+  .badge.ok{background:rgba(166,255,77,.15); color:var(--accent);}
+  .badge.no{background:rgba(255,93,93,.15); color:var(--danger);}
+  .results-actions{display:flex; gap:12px; margin-top:auto;}
+  .results-actions button{flex:1;}
+
+  /* Tips */
+  .tip-section{background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-lg); margin-bottom:14px; overflow:hidden;}
+  .tip-head{display:flex; justify-content:space-between; align-items:center; padding:18px 20px; cursor:pointer;}
+  .tip-head h3{margin:0; font-size:16px; font-weight:700;}
+  .tip-head .chev{color:var(--text-dim); transition:transform .15s;}
+  .tip-section.open .chev{transform:rotate(180deg);}
+  .tip-body{max-height:0; overflow:hidden; transition:max-height .2s ease; padding:0 20px;}
+  .tip-section.open .tip-body{max-height:2000px; padding:0 20px 20px;}
+  .trick{margin-bottom:16px;}
+  .trick:last-child{margin-bottom:0;}
+  .trick h4{margin:0 0 5px; font-size:14.5px; color:var(--accent); font-weight:700;}
+  .trick p{margin:0; font-size:14px; color:var(--text-mid); line-height:1.55;}
+  .trick .ex{color:var(--text-dim); font-size:13px; margin-top:4px; font-style:italic;}
+  .table-scroll{overflow-x:auto; margin-top:4px;}
+  .grid-table{display:grid; gap:6px; min-width:max-content;}
+  .grid-table .cell{
+    background:var(--chip); border:1px solid var(--chip-border); border-radius:8px;
+    padding:9px 12px; font-size:13px; font-weight:600; text-align:center; font-variant-numeric:tabular-nums;
+  }
+  .grid-table .cell.hd{background:transparent; border:none; color:var(--text-dim); font-weight:700;}
+
+  ::-webkit-scrollbar{width:0; height:0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <div class="hero">
+      <div class="kicker">Mental math drills</div>
+      <h1>Sharpen your <span class="accent">edge.</span></h1>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card" onclick="go('fa-setup')">
+        <div class="mode-icon">⚡</div>
+        <div class="mode-info">
+          <h3>Flash Anzan</h3>
+          <p>Rapid-fire addition &amp; subtraction, read aloud</p>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+      <div class="mode-card" onclick="go('mult-setup')">
+        <div class="mode-icon">✕</div>
+        <div class="mode-info">
+          <h3>Multiplication</h3>
+          <p>Timed multiplication drills, read aloud</p>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+      <div class="mode-card" onclick="go('tips')">
+        <div class="mode-icon">💡</div>
+        <div class="mode-info">
+          <h3>Tips &amp; Tricks</h3>
+          <p>Speed shortcuts, squares, cubes, tables</p>
+        </div>
+        <div class="mode-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="section-label">RECENT SESSIONS</div>
+    <div id="recent-list"></div>
+  </div>
+
+  <!-- FLASH ANZAN SETUP -->
+  <div class="view" id="view-fa-setup">
+    <div class="topbar">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <h1>Flash Anzan</h1>
+    </div>
+    <div class="subtitle">Configure your drill</div>
+    <div class="setup-scroll">
+      <div class="setting-row">
+        <div><div class="setting-label">Number of digits</div><div class="setting-sub">Digits per flashed number</div></div>
+        <div class="stepper"><button onclick="step('fa','digits',-1)">–</button><div class="val" id="fa-digits-val">1</div><button onclick="step('fa','digits',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Numbers per question</div><div class="setting-sub">How many numbers flash</div></div>
+        <div class="stepper"><button onclick="step('fa','count',-1)">–</button><div class="val" id="fa-count-val">10</div><button onclick="step('fa','count',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Include subtraction</div><div class="setting-sub">Mix in negative numbers</div></div>
+        <div class="toggle" id="fa-sub-toggle" onclick="toggleSub()"><div class="knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Flash speed</div><div class="setting-sub">Milliseconds per number</div></div>
+        <div class="stepper"><button onclick="step('fa','speed',-100)">–</button><div class="val" id="fa-speed-val">1500</div><button onclick="step('fa','speed',100)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Number of questions</div><div class="setting-sub">Questions in this session</div></div>
+        <div class="stepper"><button onclick="step('fa','questions',-1)">–</button><div class="val" id="fa-questions-val">5</div><button onclick="step('fa','questions',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Voice readout</div><div class="setting-sub">"add x" / "less y" spoken aloud</div></div>
+        <div class="toggle on" id="fa-voice-toggle" onclick="toggleVoice('fa')"><div class="knob"></div></div>
+      </div>
+    </div>
+    <div class="start-bar"><button class="btn-primary" onclick="startFlashAnzan()">Start Practice</button></div>
+  </div>
+
+  <!-- MULTIPLICATION SETUP -->
+  <div class="view" id="view-mult-setup">
+    <div class="topbar">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <h1>Multiplication</h1>
+    </div>
+    <div class="subtitle">Configure your drill</div>
+    <div class="setup-scroll">
+      <div class="setting-row">
+        <div><div class="setting-label">Digits — first number</div><div class="setting-sub">e.g. 2 = 10–99</div></div>
+        <div class="stepper"><button onclick="step('mult','digitsA',-1)">–</button><div class="val" id="mult-digitsA-val">2</div><button onclick="step('mult','digitsA',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Digits — second number</div><div class="setting-sub">e.g. 1 = 1–9</div></div>
+        <div class="stepper"><button onclick="step('mult','digitsB',-1)">–</button><div class="val" id="mult-digitsB-val">1</div><button onclick="step('mult','digitsB',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Seconds per question</div><div class="setting-sub">Time to answer before auto-next</div></div>
+        <div class="stepper"><button onclick="step('mult','time',-1)">–</button><div class="val" id="mult-time-val">8</div><button onclick="step('mult','time',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Number of questions</div><div class="setting-sub">Questions in this session</div></div>
+        <div class="stepper"><button onclick="step('mult','questions',-1)">–</button><div class="val" id="mult-questions-val">10</div><button onclick="step('mult','questions',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Voice readout</div><div class="setting-sub">Problem spoken aloud</div></div>
+        <div class="toggle on" id="mult-voice-toggle" onclick="toggleVoice('mult')"><div class="knob"></div></div>
+      </div>
+    </div>
+    <div class="start-bar"><button class="btn-primary" onclick="startMultiplication()">Start Practice</button></div>
+  </div>
+
+  <!-- FLASH ANZAN PRACTICE -->
+  <div class="view practice-view" id="view-fa-practice">
+    <div class="practice-top">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <div class="qcount" id="fa-qcount">1/5</div>
+    </div>
+    <div class="flash-stage"><div class="flash-number" id="fa-flash-number"></div></div>
+    <div id="fa-answer-zone" style="display:none;">
+      <div class="countdown-block"><div class="countdown-label">Next question in</div><div class="countdown-num" id="fa-countdown">8</div></div>
+      <div class="answer-label">TYPE OUT YOUR ANSWER</div>
+      <div class="answer-box" id="fa-answer-box">&nbsp;</div>
+      <div class="keypad" id="fa-keypad"></div>
+    </div>
+  </div>
+
+  <!-- MULTIPLICATION PRACTICE -->
+  <div class="view practice-view" id="view-mult-practice">
+    <div class="practice-top">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <div class="qcount" id="mult-qcount">1/10</div>
+    </div>
+    <div class="flash-stage"><div class="mult-problem" id="mult-problem"></div></div>
+    <div id="mult-answer-zone">
+      <div class="countdown-block"><div class="countdown-label">Next question in</div><div class="countdown-num" id="mult-countdown">8</div></div>
+      <div class="answer-label">TYPE OUT YOUR ANSWER</div>
+      <div class="answer-box" id="mult-answer-box">&nbsp;</div>
+      <div class="keypad" id="mult-keypad"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="view" id="view-results">
+    <div class="topbar"><h1 id="results-title">Session complete</h1></div>
+    <div class="results-hero">
+      <div class="results-score" id="results-score">0/0</div>
+      <div class="results-sub" id="results-sub">correct answers</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" id="stat-accuracy">0%</div><div class="lbl">Accuracy</div></div>
+      <div class="stat-box"><div class="num" id="stat-avgtime">0s</div><div class="lbl">Avg time</div></div>
+    </div>
+    <div class="review-list" id="review-list"></div>
+    <div class="results-actions">
+      <button class="btn-ghost" onclick="go('home')">Home</button>
+      <button class="btn-primary" onclick="retrySession()">Retry</button>
+    </div>
+  </div>
+
+  <!-- TIPS & TRICKS -->
+  <div class="view" id="view-tips">
+    <div class="topbar">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <h1>Tips &amp; Tricks</h1>
+    </div>
+    <div class="subtitle">Speed shortcuts for mental math under pressure</div>
+    <div class="setup-scroll" id="tips-scroll"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------- Navigation ---------- */
+function go(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  window.speechSynthesis.cancel();
+  clearAllTimers();
+  if(view==='home') renderRecent();
+  if(view==='tips' && !document.getElementById('tips-scroll').childElementCount) renderTips();
+}
+
+let timers=[];
+function clearAllTimers(){ timers.forEach(t=>clearInterval(t)||clearTimeout(t)); timers=[]; }
+function track(id){ timers.push(id); return id; }
+
+/* ---------- Settings state ---------- */
+const faSettings = {digits:1, count:10, sub:false, speed:1500, questions:5, voice:true};
+const multSettings = {digitsA:2, digitsB:1, time:8, questions:10, voice:true};
+
+function step(kind, key, delta){
+  const s = kind==='fa'?faSettings:multSettings;
+  let v = s[key] + delta;
+  const bounds = {
+    digits:[1,4], count:[3,30], speed:[300,3000], questions:[3,30],
+    digitsA:[1,4], digitsB:[1,3], time:[3,30]
+  };
+  const b = bounds[key];
+  if(b){ v = Math.max(b[0], Math.min(b[1], v)); }
+  s[key]=v;
+  document.getElementById(kind+'-'+key+'-val').textContent=v;
+}
+function toggleSub(){
+  faSettings.sub = !faSettings.sub;
+  document.getElementById('fa-sub-toggle').classList.toggle('on', faSettings.sub);
+}
+function toggleVoice(kind){
+  const s = kind==='fa'?faSettings:multSettings;
+  s.voice = !s.voice;
+  document.getElementById(kind+'-voice-toggle').classList.toggle('on', s.voice);
+}
+
+/* ---------- Voice ---------- */
+function speak(text, rate){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = rate || 1.05;
+  u.pitch = 1;
+  window.speechSynthesis.speak(u);
+}
+
+/* ---------- Recent sessions (localStorage) ---------- */
+function saveRecent(entry){
+  let list = JSON.parse(localStorage.getItem('recent')||'[]');
+  list.unshift(entry);
+  list = list.slice(0,6);
+  localStorage.setItem('recent', JSON.stringify(list));
+}
+function renderRecent(){
+  const list = JSON.parse(localStorage.getItem('recent')||'[]');
+  const el = document.getElementById('recent-list');
+  if(!list.length){ el.innerHTML = '<div class="empty-hint">Your recent drills will show up here.</div>'; return; }
+  el.innerHTML = list.map((r,i)=>`
+    <div class="recent-card">
+      <div class="recent-title">${r.title}</div>
+      <div class="chip-row">
+        ${r.chips.map(c=>`<div class="chip">${c}</div>`).join('')}
+      </div>
+      <div class="row-end"><button class="btn-primary" onclick='replay(${i})'>Practice</button></div>
+    </div>`).join('');
+}
+function replay(i){
+  const list = JSON.parse(localStorage.getItem('recent')||'[]');
+  const r = list[i];
+  if(!r) return;
+  if(r.kind==='fa'){ Object.assign(faSettings, r.settings); startFlashAnzan(true); }
+  else { Object.assign(multSettings, r.settings); startMultiplication(true); }
+}
+
+/* ---------- Shared session engine ---------- */
+let session = null;
+
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function buildKeypad(containerId, onDigit, onDot, onBack, onGo){
+  const el = document.getElementById(containerId);
+  const keys = ['1','2','3','4','5','6','7','8','9','−','0','⌫'];
+  el.innerHTML='';
+  keys.forEach(k=>{
+    const b=document.createElement('button');
+    b.textContent=k;
+    if(k==='⌫'){ b.onclick=onBack; }
+    else if(k==='−'){ b.classList.add('neg-toggle'); b.onclick=()=>onDigit('-'); }
+    else { b.onclick=()=>onDigit(k); }
+    el.appendChild(b);
+  });
+  const go=document.createElement('button');
+  go.textContent='Submit'; go.className='go';
+  go.style.gridColumn='span 3';
+  go.onclick=onGo;
+  el.appendChild(go);
+}
+
+/* ---------- Flash Anzan ---------- */
+function startFlashAnzan(fromReplay){
+  if(!fromReplay){
+    saveRecent({
+      kind:'fa', title:'Flash Anzan',
+      chips:[faSettings.sub?'Add/Sub':'Addition', faSettings.digits+' Digits', faSettings.speed+'ms Speed', faSettings.count+' Numbers'],
+      settings:{...faSettings}
+    });
+  }
+  session = {kind:'fa', qIndex:0, total:faSettings.questions, results:[], startTime:0};
+  go('fa-practice');
+  runFaQuestion();
+}
+
+function genFaSequence(){
+  const d = faSettings.digits;
+  const min = d===1?1:Math.pow(10,d-1);
+  const max = Math.pow(10,d)-1;
+  let total=0, seq=[];
+  for(let i=0;i<faSettings.count;i++){
+    let val = randInt(min,max);
+    let neg = faSettings.sub && i>0 && Math.random()<0.5 && (total-val>=0);
+    if(neg) val = -val;
+    total+=val;
+    seq.push(val);
+  }
+  return {seq, total};
+}
+
+function runFaQuestion(){
+  document.getElementById('fa-qcount').textContent = `${session.qIndex+1}/${session.total}`;
+  document.getElementById('fa-answer-zone').style.display='none';
+  const numEl = document.getElementById('fa-flash-number');
+  numEl.textContent='';
+  numEl.className='flash-number';
+  const {seq,total} = genFaSequence();
+  session.current = {answer:total, seq};
+  session.startTime = Date.now();
+  let i=0;
+  function showNext(){
+    if(i>=seq.length){
+      numEl.textContent='';
+      showFaAnswerZone();
+      return;
+    }
+    const v = seq[i];
+    numEl.textContent = Math.abs(v);
+    numEl.className = 'flash-number ' + (v<0?'neg':'pos');
+    if(faSettings.voice){
+      speak((v<0? 'less ' : 'add ') + Math.abs(v), Math.min(1.5, 900/faSettings.speed*1.1));
+    }
+    i++;
+    track(setTimeout(()=>{
+      numEl.textContent='';
+      track(setTimeout(showNext, Math.min(180, faSettings.speed*0.15)));
+    }, faSettings.speed*0.82));
+  }
+  showNext();
+}
+
+let faInput='';
+function showFaAnswerZone(){
+  faInput='';
+  document.getElementById('fa-answer-zone').style.display='block';
+  document.getElementById('fa-answer-box').innerHTML='&nbsp;';
+  document.getElementById('fa-answer-box').className='answer-box';
+  buildKeypad('fa-keypad',
+    (d)=>{ if(d==='-' && faInput.length>0) return; faInput+=d; document.getElementById('fa-answer-box').textContent=faInput; },
+    ()=>{},
+    ()=>{ faInput=faInput.slice(0,-1); document.getElementById('fa-answer-box').innerHTML = faInput||'&nbsp;'; },
+    ()=>submitFa()
+  );
+  let timeLeft = Math.max(6, Math.round(faSettings.count*faSettings.speed/1000*0.6));
+  document.getElementById('fa-countdown').textContent = timeLeft;
+  const iv = track(setInterval(()=>{
+    timeLeft--;
+    document.getElementById('fa-countdown').textContent = Math.max(timeLeft,0);
+    if(timeLeft<=0){ clearInterval(iv); submitFa(); }
+  },1000));
+}
+function submitFa(){
+  clearAllTimers();
+  const given = faInput===''? null : parseInt(faInput,10);
+  const correct = given===session.current.answer;
+  const timeTaken = ((Date.now()-session.startTime)/1000).toFixed(1);
+  document.getElementById('fa-answer-box').classList.add(correct?'correct':'wrong');
+  session.results.push({correct, given, answer:session.current.answer, time:timeTaken});
+  track(setTimeout(()=>{
+    session.qIndex++;
+    if(session.qIndex>=session.total) finishSession();
+    else runFaQuestion();
+  }, 700));
+}
+
+/* ---------- Multiplication ---------- */
+function startMultiplication(fromReplay){
+  if(!fromReplay){
+    saveRecent({
+      kind:'mult', title:'Multiplication',
+      chips:[multSettings.digitsA+'×'+multSettings.digitsB+' digits', multSettings.time+'s / question', multSettings.questions+' Questions'],
+      settings:{...multSettings}
+    });
+  }
+  session = {kind:'mult', qIndex:0, total:multSettings.questions, results:[]};
+  go('mult-practice');
+  runMultQuestion();
+}
+function runMultQuestion(){
+  document.getElementById('mult-qcount').textContent = `${session.qIndex+1}/${session.total}`;
+  const a = randInt(multSettings.digitsA===1?1:Math.pow(10,multSettings.digitsA-1), Math.pow(10,multSettings.digitsA)-1);
+  const b = randInt(multSettings.digitsB===1?1:Math.pow(10,multSettings.digitsB-1), Math.pow(10,multSettings.digitsB)-1);
+  session.current = {a,b,answer:a*b};
+  session.startTime = Date.now();
+  document.getElementById('mult-problem').textContent = `${a} × ${b}`;
+  if(multSettings.voice) speak(`${a} times ${b}`, 1.0);
+  multInput='';
+  document.getElementById('mult-answer-box').innerHTML='&nbsp;';
+  document.getElementById('mult-answer-box').className='answer-box';
+  buildKeypad('mult-keypad',
+    (d)=>{ multInput+=d; document.getElementById('mult-answer-box').textContent=multInput; },
+    ()=>{},
+    ()=>{ multInput=multInput.slice(0,-1); document.getElementById('mult-answer-box').innerHTML = multInput||'&nbsp;'; },
+    ()=>submitMult()
+  );
+  let timeLeft = multSettings.time;
+  document.getElementById('mult-countdown').textContent = timeLeft;
+  const iv = track(setInterval(()=>{
+    timeLeft--;
+    document.getElementById('mult-countdown').textContent = Math.max(timeLeft,0);
+    if(timeLeft<=0){ clearInterval(iv); submitMult(); }
+  },1000));
+}
+let multInput='';
+function submitMult(){
+  clearAllTimers();
+  const given = multInput===''? null : parseInt(multInput,10);
+  const correct = given===session.current.answer;
+  const timeTaken = ((Date.now()-session.startTime)/1000).toFixed(1);
+  document.getElementById('mult-answer-box').classList.add(correct?'correct':'wrong');
+  session.results.push({correct, given, answer:session.current.answer, time:timeTaken, problem:`${session.current.a}×${session.current.b}`});
+  track(setTimeout(()=>{
+    session.qIndex++;
+    if(session.qIndex>=session.total) finishSession();
+    else runMultQuestion();
+  }, 700));
+}
+
+/* ---------- Results ---------- */
+function finishSession(){
+  const correctCount = session.results.filter(r=>r.correct).length;
+  document.getElementById('results-title').textContent = session.kind==='fa'?'Flash Anzan':'Multiplication';
+  document.getElementById('results-score').textContent = `${correctCount}/${session.total}`;
+  document.getElementById('results-sub').textContent = 'correct answers';
+  document.getElementById('stat-accuracy').textContent = Math.round(correctCount/session.total*100)+'%';
+  const avgTime = (session.results.reduce((s,r)=>s+parseFloat(r.time),0)/session.results.length).toFixed(1);
+  document.getElementById('stat-avgtime').textContent = avgTime+'s';
+  const rl = document.getElementById('review-list');
+  rl.innerHTML = session.results.map((r,i)=>`
+    <div class="review-item">
+      <span>${r.problem?r.problem:'Q'+(i+1)} — answer ${r.answer}</span>
+      <span class="badge ${r.correct?'ok':'no'}">${r.correct?'Correct':(r.given===null?'Skipped':'Got '+r.given)}</span>
+    </div>`).join('');
+  go('results');
+}
+function retrySession(){
+  if(session.kind==='fa') startFlashAnzan(true);
+  else startMultiplication(true);
+}
+
+/* ---------- Tips & Tricks content ---------- */
+function renderTips(){
+  const el = document.getElementById('tips-scroll');
+  const squares = Array.from({length:30},(_,i)=>i+1).map(n=>`<div class="cell">${n}² = ${n*n}</div>`).join('');
+  const cubes = Array.from({length:20},(_,i)=>i+1).map(n=>`<div class="cell">${n}³ = ${n*n*n}</div>`).join('');
+  const fracs = [[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,6],[5,6],[1,7],[1,8],[3,8],[5,8],[7,8],[1,9],[1,16]];
+  const fracCells = fracs.map(([n,d])=>`<div class="cell">${n}/${d} = ${(n/d*100).toFixed(1)}%</div>`).join('');
+  const pow2 = Array.from({length:16},(_,i)=>i+1).map(n=>`<div class="cell">2^${n} = ${Math.pow(2,n)}</div>`).join('');
+
+  el.innerHTML = `
+    <div class="tip-section open">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Addition &amp; Subtraction speed</h3><div class="chev">⌄</div></div>
+      <div class="tip-body">
+        <div class="trick"><h4>Left-to-right addition</h4><p>Add the highest place value first, then work right, adjusting as you go. This mirrors how you'll report a running total out loud, and matches how anzan flashing works.</p><div class="ex">482 + 357 → 400+300=700, 80+50=130, 2+7=9 → 839</div></div>
+        <div class="trick"><h4>Complements for subtraction</h4><p>Instead of borrowing, subtract using the complement to the next round number, then adjust.</p><div class="ex">1000 − 437 = complement of 437 to 999 (562) + 1 = 563</div></div>
+        <div class="trick"><h4>Round and adjust</h4><p>Round one operand to the nearest 10/100, add, then correct by the rounding amount.</p><div class="ex">68 + 57 → 70 + 57 − 2 = 125</div></div>
+        <div class="trick"><h4>Running total chunking</h4><p>In Anzan-style drills, keep a running total in your head as tens/units separately — don't recompute from scratch each flash. Update units first, carry only when it overflows 10.</p></div>
+      </div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Multiplication speed</h3><div class="chev">⌄</div></div>
+      <div class="tip-body">
+        <div class="trick"><h4>Multiply by 11</h4><p>Split the digits, add adjacent pairs, carry as needed.</p><div class="ex">11 × 45 → 4_(4+5)_5 = 4 9 5 = 495</div></div>
+        <div class="trick"><h4>Multiply by 5, 25, 9</h4><p>×5 = ×10÷2. ×25 = ×100÷4. ×9 = ×10 − original.</p><div class="ex">64 × 5 = 640÷2 = 320. 48 × 25 = 4800÷4 = 1200. 37 × 9 = 370−37 = 333</div></div>
+        <div class="trick"><h4>Squaring numbers ending in 5</h4><p>Take the leading digit(s) n, compute n×(n+1), append 25.</p><div class="ex">65² → 6×7=42 → 4225</div></div>
+        <div class="trick"><h4>Difference of squares</h4><p>For two numbers of the same parity, a×b = mid² − diff² where mid is their average and diff is the distance from the average.</p><div class="ex">47 × 53 → mid=50, diff=3 → 2500−9=2491</div></div>
+        <div class="trick"><h4>Base method (near 100)</h4><p>For numbers close to a base like 100, use the deviation from base: (a+devB)×base + devA×devB.</p><div class="ex">96 × 93 → devs −4,−7 → (96−7)=89, then 89×100 + (−4×−7)=28 → 8928</div></div>
+        <div class="trick"><h4>Cross-multiplication (Vedic)</h4><p>For 2-digit × 2-digit ab × cd: units = b×d, middle = a×d+b×c, tens+ = a×c, then carry.</p><div class="ex">23 × 47 → 3×7=21, 2×7+3×4=26, 2×4=8 → 8|26|21 → carry → 1081</div></div>
+      </div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Squares to memorize (1–30)</h3><div class="chev">⌄</div></div>
+      <div class="tip-body"><div class="table-scroll"><div class="grid-table" style="grid-template-columns:repeat(5,1fr);">${squares}</div></div></div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Cubes to memorize (1–20)</h3><div class="chev">⌄</div></div>
+      <div class="tip-body"><div class="table-scroll"><div class="grid-table" style="grid-template-columns:repeat(4,1fr);">${cubes}</div></div></div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Fraction ↔ percent conversions</h3><div class="chev">⌄</div></div>
+      <div class="tip-body"><div class="table-scroll"><div class="grid-table" style="grid-template-columns:repeat(3,1fr);">${fracCells}</div></div></div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Powers of 2 (useful for sizing / odds)</h3><div class="chev">⌄</div></div>
+      <div class="tip-body"><div class="table-scroll"><div class="grid-table" style="grid-template-columns:repeat(4,1fr);">${pow2}</div></div></div>
+    </div>
+
+    <div class="tip-section">
+      <div class="tip-head" onclick="toggleTip(this)"><h3>Interview-day habits</h3><div class="chev">⌄</div></div>
+      <div class="tip-body">
+        <div class="trick"><h4>Talk while you compute</h4><p>Quant interviews score your process — narrate your approach ("I'll round to 50 and adjust") while you get to the number.</p></div>
+        <div class="trick"><h4>Sanity check with magnitude</h4><p>Estimate the order of magnitude first (is this ~50 or ~5000?) before refining — catches most silly errors instantly.</p></div>
+        <div class="trick"><h4>Drill under a clock</h4><p>Always practice with the countdown on. Real interview pressure is closer to an 8–10s pace than untimed practice.</p></div>
+      </div>
+    </div>
+  `;
+}
+function toggleTip(headEl){
+  const section = headEl.parentElement;
+  const wasOpen = section.classList.contains('open');
+  document.querySelectorAll('.tip-section').forEach(s=>s.classList.remove('open'));
+  if(!wasOpen) section.classList.add('open');
+}
+
+/* ---------- init ---------- */
+renderRecent();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
