@@ -136,6 +136,11 @@
   .lab-status{color:var(--text-dim); font-size:13px; text-align:center; margin-top:10px; min-height:18px;}
   .lab-status.err{color:var(--danger);}
   .lab-status.ok{color:var(--accent);}
+  .lab-error{
+    background:var(--chip); border:1px solid var(--danger); color:#ffb3b3; font-size:11.5px;
+    border-radius:12px; padding:10px 12px; margin-top:8px; white-space:pre-wrap; word-break:break-word;
+    max-height:160px; overflow-y:auto; user-select:text;
+  }
 
   /* Practice */
   .practice-view{justify-content:flex-start; padding-top:4px;}
@@ -445,6 +450,8 @@
 
       <button class="btn-primary" style="width:100%; margin-top:14px;" onclick="playSample()" id="lab-play-btn">▶ Play sample</button>
       <div class="lab-status" id="lab-status"></div>
+      <pre class="lab-error" id="lab-error" style="display:none;"></pre>
+      <button class="btn-ghost" style="width:100%; margin-top:6px; display:none;" id="lab-copy-btn" onclick="copyLabError()">Copy error text</button>
 
       <button class="btn-ghost" style="width:100%; margin-top:18px;" onclick="useThisVoice()">Use this voice everywhere</button>
       <div class="lab-status" id="lab-active-status"></div>
@@ -684,25 +691,52 @@ function loadEngineModule(engine){
   if(engineLoading[engine]) return engineLoading[engine];
   let p;
   if(engine==='piper'){
-    p = import('https://esm.sh/@mintplex-labs/piper-tts-web@1.0.5').then(mod=>{ engineModules[engine]=mod; return mod; });
+    p = import('https://esm.sh/@mintplex-labs/piper-tts-web@1.0.5?bundle')
+      .catch(err=>{ throw new Error('[import] Piper library failed to load from CDN: '+describeErr(err)); })
+      .then(mod=>{
+        // handle CJS/ESM interop: predict() may live on the module itself or on mod.default
+        const api = (mod && typeof mod.predict==='function') ? mod
+                  : (mod && mod.default && typeof mod.default.predict==='function') ? mod.default
+                  : null;
+        if(!api) throw new Error('[import] Piper module loaded but no predict() function found on it (unexpected export shape).');
+        engineModules[engine]=api; return api;
+      });
   } else if(engine==='kokoro'){
-    p = import('https://esm.sh/kokoro-js@1.2.1').then(async mod=>{
-      const tts = await mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {dtype:'q8', device:'wasm'});
-      const inst = {mod, tts};
-      engineModules[engine] = inst;
-      return inst;
-    });
+    p = import('https://esm.sh/kokoro-js@1.2.1?bundle')
+      .catch(err=>{ throw new Error('[import] Kokoro library failed to load from CDN: '+describeErr(err)); })
+      .then(async mod=>{
+        const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS);
+        if(!KokoroTTS) throw new Error('[import] Kokoro module loaded but KokoroTTS export was not found.');
+        let tts;
+        try{
+          tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {dtype:'q8', device:'wasm'});
+        }catch(err){
+          throw new Error('[model download/init] Kokoro model failed to load: '+describeErr(err));
+        }
+        const inst = {mod, tts};
+        engineModules[engine] = inst;
+        return inst;
+      });
   } else if(engine==='espeak'){
-    p = import('https://esm.sh/espeak-ng@1.0.2').then(mod=>{
-      const factory = mod.default || mod;
-      engineModules[engine] = factory;
-      return factory;
-    });
+    p = import('https://esm.sh/espeak-ng@1.0.2?bundle')
+      .catch(err=>{ throw new Error('[import] eSpeak-NG library failed to load from CDN: '+describeErr(err)); })
+      .then(mod=>{
+        const factory = (typeof mod==='function') ? mod
+                      : (typeof mod.default==='function') ? mod.default
+                      : null;
+        if(!factory) throw new Error('[import] eSpeak-NG module loaded but no callable factory export was found.');
+        engineModules[engine] = factory;
+        return factory;
+      });
   } else {
     return Promise.reject(new Error('Unknown engine: '+engine));
   }
   engineLoading[engine] = p.finally(()=>{ delete engineLoading[engine]; });
   return engineLoading[engine];
+}
+function describeErr(err){
+  if(!err) return 'unknown error';
+  return err.message || String(err);
 }
 
 function encodeWav(float32, sampleRate){
@@ -725,20 +759,27 @@ function encodeWav(float32, sampleRate){
 async function synthesizeWithEngine(engine, text){
   if(engine==='piper'){
     const mod = await loadEngineModule('piper');
-    return await mod.predict({text, voiceId: engineVoiceId.piper});
+    try{
+      return await mod.predict({text, voiceId: engineVoiceId.piper});
+    }catch(err){ throw new Error('[inference] Piper predict() failed: '+describeErr(err)); }
   }
   if(engine==='kokoro'){
     const {tts} = await loadEngineModule('kokoro');
-    const audio = await tts.generate(text, {voice: engineVoiceId.kokoro});
+    let audio;
+    try{
+      audio = await tts.generate(text, {voice: engineVoiceId.kokoro});
+    }catch(err){ throw new Error('[inference] Kokoro generate() failed: '+describeErr(err)); }
     if(typeof audio.toBlob === 'function') return await audio.toBlob();
     return encodeWav(audio.audio, audio.sampling_rate || audio.sample_rate || 24000);
   }
   if(engine==='espeak'){
     const factory = await loadEngineModule('espeak');
     const safe = text.replace(/["']/g,'');
-    const instance = await factory({arguments:['-v', engineVoiceId.espeak, '-w','out.wav','-q', safe]});
-    const bytes = instance.FS.readFile('out.wav');
-    return new Blob([bytes], {type:'audio/wav'});
+    try{
+      const instance = await factory({arguments:['-v', engineVoiceId.espeak, '-w','out.wav','-q', safe]});
+      const bytes = instance.FS.readFile('out.wav');
+      return new Blob([bytes], {type:'audio/wav'});
+    }catch(err){ throw new Error('[inference] eSpeak-NG synthesis failed: '+describeErr(err)); }
   }
   throw new Error('Unknown engine: '+engine);
 }
@@ -792,7 +833,10 @@ async function playSample(){
   const text = document.getElementById('lab-sample-text').value.trim() || 'testing one two three';
   const btn = document.getElementById('lab-play-btn');
   const status = document.getElementById('lab-status');
+  const errBox = document.getElementById('lab-error');
+  const copyBtn = document.getElementById('lab-copy-btn');
   status.className='lab-status'; status.textContent = ttsEngine==='browser' ? 'Playing…' : 'Loading model (first time can take a moment)…';
+  errBox.style.display='none'; errBox.textContent=''; copyBtn.style.display='none';
   btn.disabled = true;
   try{
     if(ttsEngine==='browser'){ speak(text, 1.0); }
@@ -803,10 +847,24 @@ async function playSample(){
     status.textContent = 'Playing ✓'; status.classList.add('ok');
   }catch(err){
     console.error(err);
-    status.textContent = 'Error: ' + (err && err.message ? err.message : err);
+    const msg = (err && err.message) ? err.message : String(err);
+    status.textContent = 'Failed — see error below';
     status.classList.add('err');
+    errBox.textContent = msg + (err && err.stack ? '\n\n'+err.stack : '');
+    errBox.style.display='block';
+    copyBtn.style.display='block';
   }finally{
     btn.disabled = false;
+  }
+}
+function copyLabError(){
+  const txt = document.getElementById('lab-error').textContent;
+  if(navigator.clipboard && txt){
+    navigator.clipboard.writeText(txt).then(()=>{
+      const b = document.getElementById('lab-copy-btn');
+      const old = b.textContent; b.textContent='Copied ✓';
+      setTimeout(()=>{ b.textContent = old; }, 1200);
+    }).catch(()=>{});
   }
 }
 function useThisVoice(){
