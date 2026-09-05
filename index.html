@@ -120,6 +120,23 @@
     border-radius:12px; padding:9px 10px; font-size:13px; max-width:150px; flex-shrink:0;
   }
 
+  /* Voice Lab */
+  .engine-tabs{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .engine-tab{
+    flex:1 1 calc(50% - 8px); background:var(--chip); border:1px solid var(--chip-border); color:var(--text-mid);
+    font-size:13.5px; font-weight:700; padding:11px 6px; border-radius:12px;
+  }
+  .engine-tab.active{background:rgba(166,255,77,0.15); border-color:var(--accent-dim); color:var(--accent);}
+  .engine-desc{color:var(--text-dim); font-size:12.5px; line-height:1.5; margin-bottom:14px;}
+  .lab-sample-box{margin-top:8px;}
+  .lab-input{
+    width:100%; background:var(--chip); border:1px solid var(--chip-border); color:var(--text);
+    border-radius:12px; padding:12px 14px; font-size:14px;
+  }
+  .lab-status{color:var(--text-dim); font-size:13px; text-align:center; margin-top:10px; min-height:18px;}
+  .lab-status.err{color:var(--danger);}
+  .lab-status.ok{color:var(--accent);}
+
   /* Practice */
   .practice-view{justify-content:flex-start; padding-top:4px;}
   .practice-top{display:flex; justify-content:space-between; align-items:center; flex-shrink:0;}
@@ -240,6 +257,14 @@
           </div>
           <div class="mode-arrow">›</div>
         </div>
+        <div class="mode-card" onclick="go('voicelab')">
+          <div class="mode-icon">🎙️</div>
+          <div class="mode-info">
+            <h3>Voice Lab</h3>
+            <p>Try open-source TTS engines &amp; pick your voice</p>
+          </div>
+          <div class="mode-arrow">›</div>
+        </div>
       </div>
       <div class="section-label">RECENT SESSIONS</div>
       <div id="recent-list"></div>
@@ -279,8 +304,8 @@
         <div class="toggle on" id="fa-voice-toggle" onclick="toggleVoice('fa')"><div class="knob"></div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub">Which voice reads the numbers</div></div>
-        <select class="voice-select" id="fa-voice-select" onchange="setVoice(this.value)"><option value="">Default</option></select>
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="fa-engine-summary">Browser default</div></div>
+        <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Voice answer input</div><div class="setting-sub">Speak your answer instead of typing</div></div>
@@ -319,8 +344,8 @@
         <div class="toggle on" id="mult-voice-toggle" onclick="toggleVoice('mult')"><div class="knob"></div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub">Which voice reads the problem</div></div>
-        <select class="voice-select" id="mult-voice-select" onchange="setVoice(this.value)"><option value="">Default</option></select>
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="mult-engine-summary">Browser default</div></div>
+        <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Voice answer input</div><div class="setting-sub">Speak your answer instead of typing</div></div>
@@ -392,6 +417,40 @@
     <div class="scroll-region" id="tips-scroll"></div>
   </div>
 
+  <!-- VOICE LAB -->
+  <div class="view" id="view-voicelab">
+    <div class="topbar">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <h1>Voice Lab</h1>
+    </div>
+    <div class="subtitle">Test open-source TTS engines, then pick one</div>
+    <div class="scroll-region">
+      <div class="engine-tabs" id="engine-tabs">
+        <button class="engine-tab" data-engine="browser" onclick="selectEngine('browser')">Browser</button>
+        <button class="engine-tab" data-engine="piper" onclick="selectEngine('piper')">Piper</button>
+        <button class="engine-tab" data-engine="kokoro" onclick="selectEngine('kokoro')">Kokoro</button>
+        <button class="engine-tab" data-engine="espeak" onclick="selectEngine('espeak')">eSpeak-NG</button>
+      </div>
+      <div class="engine-desc" id="engine-desc"></div>
+
+      <div class="setting-row">
+        <div><div class="setting-label">Voice</div><div class="setting-sub">Available for the selected engine</div></div>
+        <select class="voice-select" id="lab-voice-select" onchange="setEngineVoice(this.value)"></select>
+      </div>
+
+      <div class="lab-sample-box">
+        <div class="setting-sub" style="margin-bottom:6px;">Sample phrase</div>
+        <input type="text" id="lab-sample-text" class="lab-input" value="add fourteen, that is, forty seven times eight">
+      </div>
+
+      <button class="btn-primary" style="width:100%; margin-top:14px;" onclick="playSample()" id="lab-play-btn">▶ Play sample</button>
+      <div class="lab-status" id="lab-status"></div>
+
+      <button class="btn-ghost" style="width:100%; margin-top:18px;" onclick="useThisVoice()">Use this voice everywhere</button>
+      <div class="lab-status" id="lab-active-status"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -405,6 +464,7 @@ function go(view){
   if(session) session.resolved = true;
   if(view==='home') renderRecent();
   if(view==='tips' && !document.getElementById('tips-scroll').childElementCount) renderTips();
+  if(view==='voicelab') initVoiceLab();
 }
 
 let timers=[];
@@ -580,6 +640,197 @@ function parseSpokenAnswer(transcript){
   return null;
 }
 
+/* ---------- Open-source TTS engines (Voice Lab) ---------- */
+// All engines load lazily from esm.sh (bundled ESM CDN) the first time they're used,
+// so the app itself stays a small static site with no build step or bundled model weights.
+const ENGINE_INFO = {
+  browser: {label:'Browser', desc:'Your device\'s built-in text-to-speech (Web Speech API). Zero download, works instantly, quality varies by phone.'},
+  piper: {label:'Piper', desc:'Rhasspy Piper (MIT). Lightweight ONNX voices, ~20\u201360MB per voice downloaded once and cached. Clear, slightly synthetic sound, runs on plain WASM \u2014 no WebGPU needed.'},
+  kokoro: {label:'Kokoro', desc:'Kokoro-82M (Apache-2.0). The most natural-sounding of the bunch. Bigger download (~80MB+ quantized) and needs more CPU/GPU \u2014 best on newer phones.'},
+  espeak: {label:'eSpeak-NG', desc:'Classic formant synthesizer (GPL). Tiny (~2MB), instant, robotic \u201cSpeak & Spell\u201d voice \u2014 good fallback, not a quality upgrade.'}
+};
+const ENGINE_VOICES = {
+  piper: [
+    {id:'en_US-hfc_female-medium', label:'Female (US)'},
+    {id:'en_US-amy-medium', label:'Amy (US)'},
+    {id:'en_US-ryan-medium', label:'Ryan (US)'},
+    {id:'en_GB-alan-medium', label:'Alan (UK)'}
+  ],
+  kokoro: [
+    {id:'af_heart', label:'Heart (US female)'},
+    {id:'af_bella', label:'Bella (US female)'},
+    {id:'am_michael', label:'Michael (US male)'},
+    {id:'bf_emma', label:'Emma (UK female)'},
+    {id:'bm_george', label:'George (UK male)'}
+  ],
+  espeak: [
+    {id:'en-us', label:'English (US)'},
+    {id:'en-us+f3', label:'English (US, female)'},
+    {id:'en-gb', label:'English (UK)'}
+  ]
+};
+
+let ttsEngine = localStorage.getItem('ttsEngine') || 'browser';
+let engineVoiceId = JSON.parse(localStorage.getItem('engineVoiceId')||'{}');
+if(!engineVoiceId.piper) engineVoiceId.piper = ENGINE_VOICES.piper[0].id;
+if(!engineVoiceId.kokoro) engineVoiceId.kokoro = ENGINE_VOICES.kokoro[0].id;
+if(!engineVoiceId.espeak) engineVoiceId.espeak = ENGINE_VOICES.espeak[0].id;
+
+const engineModules = {};   // cached loaded module/instance per engine
+const engineLoading = {};   // in-flight load promises per engine
+
+function loadEngineModule(engine){
+  if(engineModules[engine]) return Promise.resolve(engineModules[engine]);
+  if(engineLoading[engine]) return engineLoading[engine];
+  let p;
+  if(engine==='piper'){
+    p = import('https://esm.sh/@mintplex-labs/piper-tts-web@1.0.5').then(mod=>{ engineModules[engine]=mod; return mod; });
+  } else if(engine==='kokoro'){
+    p = import('https://esm.sh/kokoro-js@1.2.1').then(async mod=>{
+      const tts = await mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {dtype:'q8', device:'wasm'});
+      const inst = {mod, tts};
+      engineModules[engine] = inst;
+      return inst;
+    });
+  } else if(engine==='espeak'){
+    p = import('https://esm.sh/espeak-ng@1.0.2').then(mod=>{
+      const factory = mod.default || mod;
+      engineModules[engine] = factory;
+      return factory;
+    });
+  } else {
+    return Promise.reject(new Error('Unknown engine: '+engine));
+  }
+  engineLoading[engine] = p.finally(()=>{ delete engineLoading[engine]; });
+  return engineLoading[engine];
+}
+
+function encodeWav(float32, sampleRate){
+  const buf = new ArrayBuffer(44 + float32.length*2);
+  const view = new DataView(buf);
+  const writeStr=(o,s)=>{ for(let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); };
+  writeStr(0,'RIFF'); view.setUint32(4, 36+float32.length*2, true); writeStr(8,'WAVE');
+  writeStr(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+  view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true);
+  writeStr(36,'data'); view.setUint32(40, float32.length*2, true);
+  let off=44;
+  for(let i=0;i<float32.length;i++){
+    const s = Math.max(-1, Math.min(1, float32[i]));
+    view.setInt16(off, s<0 ? s*0x8000 : s*0x7fff, true);
+    off += 2;
+  }
+  return new Blob([buf], {type:'audio/wav'});
+}
+
+async function synthesizeWithEngine(engine, text){
+  if(engine==='piper'){
+    const mod = await loadEngineModule('piper');
+    return await mod.predict({text, voiceId: engineVoiceId.piper});
+  }
+  if(engine==='kokoro'){
+    const {tts} = await loadEngineModule('kokoro');
+    const audio = await tts.generate(text, {voice: engineVoiceId.kokoro});
+    if(typeof audio.toBlob === 'function') return await audio.toBlob();
+    return encodeWav(audio.audio, audio.sampling_rate || audio.sample_rate || 24000);
+  }
+  if(engine==='espeak'){
+    const factory = await loadEngineModule('espeak');
+    const safe = text.replace(/["']/g,'');
+    const instance = await factory({arguments:['-v', engineVoiceId.espeak, '-w','out.wav','-q', safe]});
+    const bytes = instance.FS.readFile('out.wav');
+    return new Blob([bytes], {type:'audio/wav'});
+  }
+  throw new Error('Unknown engine: '+engine);
+}
+
+function playBlob(blob){
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  audio.play().catch(()=>{});
+  audio.onended = ()=> URL.revokeObjectURL(url);
+}
+
+/* Used everywhere in practice sessions instead of calling speak()/speechSynthesis directly. */
+function speakUnified(text, rate){
+  if(ttsEngine==='browser'){ speak(text, rate); return; }
+  synthesizeWithEngine(ttsEngine, text).then(playBlob).catch(err=>{
+    console.error('TTS engine error, falling back to browser voice:', err);
+    speak(text, rate); // graceful fallback so a broken engine never silences practice
+  });
+}
+
+/* ---- Voice Lab UI ---- */
+function initVoiceLab(){
+  selectEngine(ttsEngine, true);
+}
+function selectEngine(engine, skipSave){
+  document.querySelectorAll('.engine-tab').forEach(b=>b.classList.toggle('active', b.dataset.engine===engine));
+  document.getElementById('engine-desc').textContent = ENGINE_INFO[engine].desc;
+  const sel = document.getElementById('lab-voice-select');
+  sel.innerHTML='';
+  if(engine==='browser'){
+    populateVoiceSelects();
+    (ttsVoices.length ? ttsVoices : []).forEach(v=>{
+      const o=document.createElement('option'); o.value=v.voiceURI; o.textContent=`${v.name} (${v.lang})`; sel.appendChild(o);
+    });
+    const def=document.createElement('option'); def.value=''; def.textContent='Default'; sel.prepend(def);
+    sel.value = selectedVoiceURI;
+  } else {
+    (ENGINE_VOICES[engine]||[]).forEach(v=>{
+      const o=document.createElement('option'); o.value=v.id; o.textContent=v.label; sel.appendChild(o);
+    });
+    sel.value = engineVoiceId[engine];
+  }
+  if(!skipSave){ ttsEngine = engine; document.getElementById('lab-status').textContent=''; document.getElementById('lab-status').className='lab-status'; }
+  else { ttsEngine = engine; }
+}
+function setEngineVoice(val){
+  if(ttsEngine==='browser'){ setVoice(val); }
+  else { engineVoiceId[ttsEngine] = val; localStorage.setItem('engineVoiceId', JSON.stringify(engineVoiceId)); }
+}
+async function playSample(){
+  const text = document.getElementById('lab-sample-text').value.trim() || 'testing one two three';
+  const btn = document.getElementById('lab-play-btn');
+  const status = document.getElementById('lab-status');
+  status.className='lab-status'; status.textContent = ttsEngine==='browser' ? 'Playing…' : 'Loading model (first time can take a moment)…';
+  btn.disabled = true;
+  try{
+    if(ttsEngine==='browser'){ speak(text, 1.0); }
+    else{
+      const blob = await synthesizeWithEngine(ttsEngine, text);
+      playBlob(blob);
+    }
+    status.textContent = 'Playing ✓'; status.classList.add('ok');
+  }catch(err){
+    console.error(err);
+    status.textContent = 'Error: ' + (err && err.message ? err.message : err);
+    status.classList.add('err');
+  }finally{
+    btn.disabled = false;
+  }
+}
+function useThisVoice(){
+  localStorage.setItem('ttsEngine', ttsEngine);
+  updateEngineSummaries();
+  const el = document.getElementById('lab-active-status');
+  el.textContent = 'Set as the active voice for Flash Anzan & Multiplication ✓';
+  el.className='lab-status ok';
+}
+function updateEngineSummaries(){
+  const label = ENGINE_INFO[ttsEngine] ? ENGINE_INFO[ttsEngine].label : 'Browser';
+  let voiceLabel = '';
+  if(ttsEngine!=='browser'){
+    const v = (ENGINE_VOICES[ttsEngine]||[]).find(v=>v.id===engineVoiceId[ttsEngine]);
+    voiceLabel = v ? ' — '+v.label : '';
+  }
+  const text = label + voiceLabel;
+  const a = document.getElementById('fa-engine-summary');
+  const b = document.getElementById('mult-engine-summary');
+  if(a) a.textContent = text;
+  if(b) b.textContent = text;
+}
+updateEngineSummaries();
+
 /* ---------- Recent sessions (localStorage) ---------- */
 function saveRecent(entry){
   let list = JSON.parse(localStorage.getItem('recent')||'[]');
@@ -747,7 +998,7 @@ function runFaQuestion(){
       numEl.textContent='';
       const timeLimit = Math.max(6, Math.round(faSettings.count*faSettings.speed/1000*0.6));
       if(faSettings.voice){
-        speak('that is', 1.05);
+        speakUnified('that is', 1.05);
         track(setTimeout(()=>beginAnswerPhase(timeLimit), 650));
       } else {
         beginAnswerPhase(timeLimit);
@@ -758,7 +1009,7 @@ function runFaQuestion(){
     numEl.textContent = Math.abs(v);
     numEl.className = 'flash-number ' + (v<0?'neg':'pos');
     if(faSettings.voice){
-      speak((v<0?'less ':'add ') + Math.abs(v), Math.min(1.5, 900/faSettings.speed*1.1));
+      speakUnified((v<0?'less ':'add ') + Math.abs(v), Math.min(1.5, 900/faSettings.speed*1.1));
     }
     i++;
     track(setTimeout(()=>{
@@ -789,7 +1040,7 @@ function runMultQuestion(){
   session.current = {a,b,answer:a*b};
   session.startTime = Date.now();
   document.getElementById('mult-problem').textContent = `${a} × ${b}`;
-  if(multSettings.voice) speak(`${a} times ${b}`, 1.0);
+  if(multSettings.voice) speakUnified(`${a} times ${b}`, 1.0);
   beginAnswerPhase(multSettings.time);
 }
 
