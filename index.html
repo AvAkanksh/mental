@@ -179,6 +179,45 @@
   .keypad button:active{background:#2a2a2a;}
   .keypad button:disabled{visibility:hidden;}
 
+  /* Timed practice (Multiplication + Blitz): session clock, no per-question limit */
+  .timed-badges{display:flex; gap:8px;}
+  .timed-badge{
+    background:var(--chip); border:1px solid var(--chip-border); border-radius:12px;
+    padding:8px 14px; font-weight:800; font-size:15px; font-variant-numeric:tabular-nums; min-width:40px; text-align:center;
+  }
+  .timed-badge.timer{color:var(--accent); border-color:var(--accent-dim); background:rgba(166,255,77,0.08);}
+  .starting-text{color:var(--text-dim); font-size:22px; font-weight:700;}
+  .add-column{display:flex; flex-direction:column; align-items:flex-end; gap:2px;}
+  .add-row{font-size:clamp(26px, 8vw, 42px); font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.01em;}
+  .timed-answer-zone{flex-shrink:0;}
+  .timed-input{
+    width:100%; background:var(--chip); border:2px solid var(--chip-border); color:var(--text);
+    border-radius:14px; padding:14px; font-size:22px; font-weight:700; text-align:center;
+    font-variant-numeric:tabular-nums;
+  }
+  .timed-input:focus{outline:none; border-color:var(--accent-dim);}
+
+  /* Segmented tab control (Blitz pattern picker) */
+  .seg-tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .seg-tab{
+    flex:1; background:var(--chip); border:1px solid var(--chip-border); color:var(--text-mid);
+    font-size:13.5px; font-weight:700; padding:11px 6px; border-radius:12px;
+  }
+  .seg-tab.active{background:rgba(166,255,77,0.15); border-color:var(--accent-dim); color:var(--accent);}
+
+  /* Stats table (timed results) */
+  .stats-table{display:flex; flex-direction:column; gap:7px;}
+  .stats-row{
+    display:flex; justify-content:space-between; align-items:center; background:var(--card);
+    border:1px solid var(--card-border); border-radius:12px; padding:11px 14px;
+  }
+  .stats-label{font-size:12px; font-weight:700; color:var(--text-dim); letter-spacing:0.04em;}
+  .stats-pill{
+    font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; background:var(--chip);
+    border:1px solid var(--chip-border); border-radius:10px; padding:4px 10px;
+  }
+  .timed-line{fill:none; stroke:var(--accent); stroke-width:2; stroke-linejoin:round; stroke-linecap:round;}
+
   /* Results */
   .results-hero{text-align:center; margin:10px 0 12px; flex-shrink:0;}
   .results-score{font-size:52px; font-weight:800; color:var(--accent);}
@@ -270,7 +309,15 @@
           <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
           <div class="mode-info">
             <h3>Multiplication</h3>
-            <p>Timed multiplication drills, read aloud</p>
+            <p>Race the clock — solve as many as you can</p>
+          </div>
+          <div class="mode-arrow">›</div>
+        </div>
+        <div class="mode-card" onclick="go('blitz-setup')">
+          <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg></div>
+          <div class="mode-info">
+            <h3>Blitz</h3>
+            <p>Timed sprints — multiplication or addition</p>
           </div>
           <div class="mode-arrow">›</div>
         </div>
@@ -346,7 +393,7 @@
       <div class="backbtn" onclick="go('home')">‹</div>
       <h1>Multiplication</h1>
     </div>
-    <div class="subtitle">Configure your drill</div>
+    <div class="subtitle">Race the clock — solve as many as you can</div>
     <div class="scroll-region">
       <div class="setting-row">
         <div><div class="setting-label">Digits — first number</div><div class="setting-sub">e.g. 2 = 10–99</div></div>
@@ -357,12 +404,8 @@
         <div class="stepper"><button onclick="step('mult','digitsB',-1)">–</button><div class="val" id="mult-digitsB-val">1</div><button onclick="step('mult','digitsB',1)">+</button></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Seconds per question</div><div class="setting-sub">Time to answer before auto-next</div></div>
-        <div class="stepper"><button onclick="step('mult','time',-1)">–</button><div class="val" id="mult-time-val">8</div><button onclick="step('mult','time',1)">+</button></div>
-      </div>
-      <div class="setting-row">
-        <div><div class="setting-label">Number of questions</div><div class="setting-sub">Questions in this session</div></div>
-        <div class="stepper"><button onclick="step('mult','questions',-1)">–</button><div class="val" id="mult-questions-val">10</div><button onclick="step('mult','questions',1)">+</button></div>
+        <div><div class="setting-label">Session length</div><div class="setting-sub">No per-question limit — solve as many as you can</div></div>
+        <div class="stepper"><button onclick="step('mult','duration',-15)">–</button><div class="val" id="mult-duration-val">2:00</div><button onclick="step('mult','duration',15)">+</button></div>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Voice readout</div><div class="setting-sub">Problem spoken aloud</div></div>
@@ -377,7 +420,7 @@
         <div class="toggle" id="mult-voicein-toggle" onclick="toggleVoiceInput('mult')"><div class="knob"></div></div>
       </div>
     </div>
-    <div class="start-bar"><button class="btn-primary" onclick="startMultiplication()">Start Practice</button></div>
+    <div class="start-bar"><button class="btn-primary" onclick="startTimedSession('mult')">Start Practice</button></div>
   </div>
 
   <!-- FLASH ANZAN PRACTICE -->
@@ -396,19 +439,85 @@
     </div>
   </div>
 
-  <!-- MULTIPLICATION PRACTICE -->
-  <div class="view practice-view" id="view-mult-practice">
+  <!-- BLITZ SETUP -->
+  <div class="view" id="view-blitz-setup">
+    <div class="topbar">
+      <div class="backbtn" onclick="go('home')">‹</div>
+      <h1>Blitz</h1>
+    </div>
+    <div class="subtitle">Configure your sprint</div>
+    <div class="scroll-region">
+      <div class="setting-row">
+        <div><div class="setting-label">Pattern</div><div class="setting-sub">What kind of problems</div></div>
+      </div>
+      <div class="seg-tabs">
+        <button class="seg-tab active" data-pattern="mult" onclick="selectBlitzPattern('mult')">Multiplication</button>
+        <button class="seg-tab" data-pattern="add" onclick="selectBlitzPattern('add')">Addition</button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Max digits</div><div class="setting-sub">Each number, up to this many digits</div></div>
+        <div class="stepper"><button onclick="step('blitz','maxDigits',-1)">–</button><div class="val" id="blitz-maxDigits-val">2</div><button onclick="step('blitz','maxDigits',1)">+</button></div>
+      </div>
+      <div class="setting-row" id="blitz-rows-row" style="display:none;">
+        <div><div class="setting-label">Max rows</div><div class="setting-sub">Numbers summed per problem</div></div>
+        <div class="stepper"><button onclick="step('blitz','rows',-1)">–</button><div class="val" id="blitz-rows-val">4</div><button onclick="step('blitz','rows',1)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Session length</div><div class="setting-sub">No per-question limit — solve as many as you can</div></div>
+        <div class="stepper"><button onclick="step('blitz','duration',-15)">–</button><div class="val" id="blitz-duration-val">2:00</div><button onclick="step('blitz','duration',15)">+</button></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Voice readout</div><div class="setting-sub">Problem spoken aloud</div></div>
+        <div class="toggle on" id="blitz-voice-toggle" onclick="toggleVoice('blitz')"><div class="knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="blitz-engine-summary">Piper — Lessac (US)</div></div>
+        <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Voice answer input</div><div class="setting-sub">Speak your answer instead of typing</div></div>
+        <div class="toggle" id="blitz-voicein-toggle" onclick="toggleVoiceInput('blitz')"><div class="knob"></div></div>
+      </div>
+    </div>
+    <div class="start-bar"><button class="btn-primary" onclick="startTimedSession('blitz')">Start Practice</button></div>
+  </div>
+
+  <!-- TIMED PRACTICE (shared by Multiplication + Blitz: session clock, no per-question limit) -->
+  <div class="view practice-view" id="view-timed-practice">
     <div class="practice-top">
       <div class="backbtn" onclick="go('home')">‹</div>
-      <div class="qcount" id="mult-qcount">1/10</div>
+      <div class="timed-badges">
+        <div class="timed-badge" id="timed-score" title="Solved">0</div>
+        <div class="timed-badge timer" id="timed-timer">2:00</div>
+      </div>
     </div>
-    <div class="flash-stage"><div class="mult-problem" id="mult-problem"></div></div>
-    <div class="answer-panel visible" id="mult-answer-zone">
-      <div class="countdown-block"><div class="countdown-label">Next question in</div><div class="countdown-num" id="mult-countdown">8</div></div>
-      <div class="answer-label" id="mult-answer-label">TYPE OUT YOUR ANSWER</div>
-      <div class="answer-box" id="mult-answer-box">&nbsp;</div>
-      <div class="mic-status" id="mult-mic-status"><div class="mic-dot"></div><span id="mult-mic-text">Listening…</span></div>
-      <div class="keypad" id="mult-keypad"></div>
+    <div class="flash-stage"><div id="timed-problem"></div></div>
+    <div class="timed-answer-zone">
+      <div class="answer-label">TYPE OUT YOUR ANSWER</div>
+      <input type="text" inputmode="numeric" autocomplete="off" class="timed-input" id="timed-input" placeholder="Enter answer" oninput="onTimedInput()">
+      <div class="mic-status" id="timed-mic-status"><div class="mic-dot"></div><span id="timed-mic-text">Listening…</span></div>
+    </div>
+  </div>
+
+  <!-- TIMED RESULTS (shared by Multiplication + Blitz) -->
+  <div class="view" id="view-timed-results">
+    <div class="topbar"><h1 id="timed-results-title">Session complete</h1></div>
+    <div class="scroll-region">
+      <div class="results-hero">
+        <div class="results-score" id="timed-results-score">0</div>
+        <div class="results-sub">solved</div>
+      </div>
+      <div class="chip-row" id="timed-results-chips"></div>
+      <div class="section-label" style="margin-top:0;">PROGRESS</div>
+      <div class="chart-card"><div id="timed-chart"></div></div>
+      <div class="section-label" style="margin-top:0;">STATS</div>
+      <div class="stats-table" id="timed-stats-table"></div>
+      <div class="section-label" style="margin-top:0;">EVERY PROBLEM</div>
+      <div class="qa-list" id="timed-qa-list"></div>
+    </div>
+    <div class="results-actions">
+      <button class="btn-ghost" onclick="go('home')">Home</button>
+      <button class="btn-primary" onclick="retryTimedSession()">Retry</button>
     </div>
   </div>
 
@@ -495,13 +604,14 @@ function go(view){
   if(view==='home') renderRecent();
   if(view==='tips' && !document.getElementById('tips-scroll').childElementCount) renderTips();
   if(view==='voicelab') initVoiceLab();
-  if(view==='fa-setup' || view==='mult-setup'){
+  if(view==='fa-setup' || view==='mult-setup' || view==='blitz-setup'){
     // Warm the model and mic permission while the user is still adjusting settings,
     // so the first question of the session has zero cold-start latency.
     loadPiper().catch(()=>{});
-    const settings = view==='fa-setup' ? faSettings : multSettings;
+    const settings = settingsFor(view.split('-')[0]);
     if(settings.voiceInput) primeMicPermission();
   }
+  if(session){ session.resolved = true; session.active = false; }
 }
 
 let timers=[];
@@ -510,34 +620,46 @@ function track(id){ timers.push(id); return id; }
 
 /* ---------- Settings state ---------- */
 const faSettings = {digits:1, count:10, sub:false, speed:1500, questions:5, voice:true, voiceInput:false};
-const multSettings = {digitsA:2, digitsB:1, time:8, questions:10, voice:true, voiceInput:false};
+const multSettings = {digitsA:2, digitsB:1, duration:120, voice:true, voiceInput:false};
+const blitzSettings = {pattern:'mult', maxDigits:2, rows:4, duration:120, voice:true, voiceInput:false};
+function settingsFor(kind){ return kind==='fa'?faSettings : kind==='mult'?multSettings : blitzSettings; }
 
 function step(kind, key, delta){
-  const s = kind==='fa'?faSettings:multSettings;
+  const s = settingsFor(kind);
   let v = s[key] + delta;
   const bounds = {
     digits:[1,4], count:[3,30], speed:[300,3000], questions:[3,30],
-    digitsA:[1,4], digitsB:[1,3], time:[3,30]
+    digitsA:[1,4], digitsB:[1,3],
+    duration:[30,600], maxDigits:[1,3], rows:[2,6]
   };
   const b = bounds[key];
   if(b){ v = Math.max(b[0], Math.min(b[1], v)); }
   s[key]=v;
-  document.getElementById(kind+'-'+key+'-val').textContent=v;
+  document.getElementById(kind+'-'+key+'-val').textContent = key==='duration' ? formatDuration(v) : v;
 }
 function toggleSub(){
   faSettings.sub = !faSettings.sub;
   document.getElementById('fa-sub-toggle').classList.toggle('on', faSettings.sub);
 }
 function toggleVoice(kind){
-  const s = kind==='fa'?faSettings:multSettings;
+  const s = settingsFor(kind);
   s.voice = !s.voice;
   document.getElementById(kind+'-voice-toggle').classList.toggle('on', s.voice);
 }
 function toggleVoiceInput(kind){
-  const s = kind==='fa'?faSettings:multSettings;
+  const s = settingsFor(kind);
   s.voiceInput = !s.voiceInput;
   document.getElementById(kind+'-voicein-toggle').classList.toggle('on', s.voiceInput);
   if(s.voiceInput) primeMicPermission();
+}
+function selectBlitzPattern(p){
+  blitzSettings.pattern = p;
+  document.querySelectorAll('.seg-tab[data-pattern]').forEach(b=>b.classList.toggle('active', b.dataset.pattern===p));
+  document.getElementById('blitz-rows-row').style.display = p==='add' ? '' : 'none';
+}
+function formatDuration(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return m+':'+String(s).padStart(2,'0');
 }
 
 /* ---------- Speech input (recognition) ---------- */
@@ -559,14 +681,29 @@ let recognitionActive = false;
 let speechSupported = (('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window)) && window.isSecureContext;
 
 function micErrorMessage(){
-  return !window.isSecureContext ? 'VOICE INPUT NEEDS HTTPS — USE KEYPAD'
-       : 'VOICE INPUT NOT SUPPORTED — USE KEYPAD';
+  return !window.isSecureContext ? 'VOICE INPUT NEEDS HTTPS'
+       : 'VOICE INPUT NOT SUPPORTED';
 }
-function fallBackToKeypad(kind, message){
-  document.getElementById(kind+'-mic-status').classList.remove('on','preparing');
-  document.getElementById(kind+'-answer-label').textContent = message;
-  document.getElementById(kind+'-keypad').classList.add('visible');
-  buildKeypadSimple(kind);
+// Flash Anzan has its own per-kind DOM ids (fa-mic-status, fa-keypad, ...); the newer
+// session-timed modes (Multiplication, Blitz) share one 'timed-' id space and a native
+// text input instead of a keypad. wantsMic() and micDomId() let the one recognizer serve both.
+function micDomId(kind, suffix){ return (kind==='fa' ? 'fa' : 'timed') + '-' + suffix; }
+function wantsMic(s){
+  if(!s) return false;
+  return s.kind==='fa' ? (!s.resolved && s.voiceMode) : (!!s.active && s.voiceMode);
+}
+function micFallback(kind, message){
+  document.getElementById(micDomId(kind,'mic-status')).classList.remove('on','preparing');
+  if(kind==='fa'){
+    document.getElementById('fa-answer-label').textContent = message+' — USE KEYPAD';
+    document.getElementById('fa-keypad').classList.add('visible');
+    buildKeypadSimple('fa');
+  } else {
+    const input = document.getElementById('timed-input');
+    input.style.display = '';
+    input.placeholder = message+' — type instead';
+    input.focus();
+  }
 }
 function ensureRecognizer(){
   if(!speechSupported) return null;
@@ -577,38 +714,45 @@ function ensureRecognizer(){
   recognizer.interimResults = true;
   recognizer.lang = 'en-US';
   recognizer.onresult = (e)=>{
-    if(!session || session.resolved) return;
+    if(!session) return;
     const res = e.results[e.results.length-1];
     const transcript = res[0].transcript;
     const parsed = parseSpokenAnswer(transcript);
-    // Always reflect what the mic is hearing, even before it resolves to a clean number,
-    // so it's visible on screen immediately instead of staying blank until time runs out.
-    updateAnswerDisplay(parsed!==null && !isNaN(parsed) ? String(parsed) : transcript.trim());
-    if(session) session.givenInput = parsed!==null && !isNaN(parsed) ? String(parsed) : session.givenInput;
-    if(parsed!==null && !isNaN(parsed) && parsed === session.current.answer){ resolveQuestion(true, parsed); }
+    const text = parsed!==null && !isNaN(parsed) ? String(parsed) : transcript.trim();
+    if(session.kind==='fa'){
+      if(session.resolved) return;
+      // Always reflect what the mic is hearing, even before it resolves to a clean number,
+      // so it's visible on screen immediately instead of staying blank until time runs out.
+      updateAnswerDisplay(text);
+      session.givenInput = parsed!==null && !isNaN(parsed) ? String(parsed) : session.givenInput;
+      if(parsed!==null && !isNaN(parsed) && parsed === session.current.answer){ resolveQuestion(true, parsed); }
+    } else if(session.active){
+      const input = document.getElementById('timed-input');
+      if(input) input.value = text;
+      if(parsed!==null && !isNaN(parsed) && parsed === session.current.answer){ resolveTimedQuestion(); }
+    }
   };
   recognizer.onerror = (e)=>{
     if(!session) return;
     if(e.error==='no-speech' || e.error==='aborted') return; // benign, onend will restart listening
     // Any other error — permission denied, no microphone hardware found, a transient service
     // failure — stops retrying (a silent retry loop here is what made "mic not detected" look
-    // like nothing was happening) and falls back to the keypad so the question stays answerable.
+    // like nothing was happening) and falls back to a typed answer so the question stays answerable.
     session.voiceMode = false;
-    const kind = session.kind;
-    const message = e.error==='audio-capture' ? 'NO MICROPHONE FOUND — USE KEYPAD'
-                  : (e.error==='not-allowed' || e.error==='service-not-allowed') ? 'MIC BLOCKED — USE KEYPAD (check browser permissions)'
-                  : 'MIC ERROR — USE KEYPAD';
-    fallBackToKeypad(kind, message);
+    const message = e.error==='audio-capture' ? 'NO MICROPHONE FOUND'
+                  : (e.error==='not-allowed' || e.error==='service-not-allowed') ? 'MIC BLOCKED (check permissions)'
+                  : 'MIC ERROR';
+    micFallback(session.kind, message);
   };
   recognizer.onend = ()=>{
     recognitionActive=false;
-    if(session && !session.resolved && session.voiceMode){
+    if(wantsMic(session)){
       try{ recognizer.start(); recognitionActive=true; }
       catch(err){
         // Some browsers throw if start() is called immediately after a stop; one short retry
         // covers that instead of leaving the mic silently off for the rest of the question.
         setTimeout(()=>{
-          if(session && !session.resolved && session.voiceMode){
+          if(wantsMic(session)){
             try{ recognizer.start(); recognitionActive=true; }catch(err2){}
           }
         }, 250);
@@ -628,10 +772,11 @@ function startListening(){
     recognitionActive=true;
     // Only claim to be "Listening" once the mic has actually been asked to start — showing this
     // any earlier is exactly what made the mic look broken when it just hadn't engaged yet.
-    const kind = session.kind;
-    document.getElementById(kind+'-mic-status').classList.remove('preparing');
-    document.getElementById(kind+'-mic-status').classList.add('on');
-    document.getElementById(kind+'-mic-text').textContent = 'Listening…';
+    const id = micDomId(session.kind, 'mic-status');
+    document.getElementById(id).classList.remove('preparing');
+    document.getElementById(id).classList.add('on');
+    document.getElementById(micDomId(session.kind,'mic-text')).textContent = 'Listening…';
+    if(session.kind!=='fa') document.getElementById('timed-input').style.display = 'none';
   }catch(e){}
 }
 function stopListening(){
@@ -640,7 +785,7 @@ function stopListening(){
   recognitionActive=false;
 }
 function showMicUnsupported(){
-  fallBackToKeypad(session.kind, micErrorMessage());
+  micFallback(session.kind, micErrorMessage());
 }
 
 /* Convert english number words (and mixed digit tokens) to an integer. Returns null if nothing numeric found. */
@@ -926,10 +1071,10 @@ function copyLabError(){
 function updateVoiceSummaries(){
   const v = PIPER_VOICES.find(v=>v.id===piperVoiceId);
   const text = 'Piper' + (v ? ' - '+v.label : '');
-  const a = document.getElementById('fa-engine-summary');
-  const b = document.getElementById('mult-engine-summary');
-  if(a) a.textContent = text;
-  if(b) b.textContent = text;
+  ['fa-engine-summary','mult-engine-summary','blitz-engine-summary'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = text;
+  });
 }
 updateVoiceSummaries();
 
@@ -958,7 +1103,8 @@ function replay(i){
   const r = list[i];
   if(!r) return;
   if(r.kind==='fa'){ Object.assign(faSettings, r.settings); startFlashAnzan(true); }
-  else { Object.assign(multSettings, r.settings); startMultiplication(true); }
+  else if(r.kind==='mult'){ Object.assign(multSettings, r.settings); startTimedSession('mult', true); }
+  else { Object.assign(blitzSettings, r.settings); startTimedSession('blitz', true); }
 }
 
 /* ---------- Shared session engine ---------- */
@@ -1002,9 +1148,10 @@ function checkLiveAnswer(){
    faster than mouse-clicking the keypad buttons one at a time. Mirrors the keypad's own
    handlers exactly, and only acts while a typed answer is actually being collected. */
 document.addEventListener('keydown', (e)=>{
-  if(!session || session.resolved) return;
-  const settings = session.kind==='fa' ? faSettings : multSettings;
-  if(settings.voiceInput) return; // this question is taking a spoken answer, not typed
+  // Multiplication/Blitz type into a native <input> now, which already gets physical-keyboard
+  // support for free — this custom handler is only for Flash Anzan's on-screen keypad.
+  if(!session || session.kind!=='fa' || session.resolved) return;
+  if(faSettings.voiceInput) return; // this question is taking a spoken answer, not typed
   if(e.key>='0' && e.key<='9'){
     session.givenInput += e.key;
     updateAnswerDisplay(session.givenInput);
@@ -1069,6 +1216,7 @@ function beginAnswerPhase(timeLimitSeconds){
   },1000));
 }
 
+/* Flash Anzan only — Multiplication and Blitz use the time-boxed engine's resolveTimedQuestion(). */
 function resolveQuestion(correct, given){
   if(!session || session.resolved) return;
   session.resolved = true;
@@ -1082,14 +1230,12 @@ function resolveQuestion(correct, given){
   session.results.push({
     correct, given: (given===undefined?null:given), answer: session.current.answer,
     time: ((Date.now()-session.startTime)/1000).toFixed(1),
-    problem: kind==='mult' ? `${session.current.a}×${session.current.b}` : undefined,
-    seq: kind==='fa' ? session.current.seq.slice() : undefined
+    seq: session.current.seq.slice()
   });
   track(setTimeout(()=>{
     session.qIndex++;
     if(session.qIndex >= session.total) finishSession();
-    else if(kind==='fa') runFaQuestion();
-    else runMultQuestion();
+    else runFaQuestion();
   }, correct ? 500 : 1000));
 }
 
@@ -1168,34 +1314,187 @@ function runFaQuestion(){
   showNext();
 }
 
-/* ---------- Multiplication ---------- */
-function startMultiplication(fromReplay){
-  const chips = [multSettings.digitsA+'×'+multSettings.digitsB+' digits', multSettings.time+'s / question', multSettings.questions+' Questions'];
-  if(!fromReplay){
-    saveRecent({kind:'mult', title:'Multiplication', chips, settings:{...multSettings}});
-  }
-  if(multSettings.voice) loadPiper().catch(()=>{});
-  if(multSettings.voiceInput) primeMicPermission();
-  session = {kind:'mult', qIndex:0, total:multSettings.questions, results:[], resolved:true, chips};
-  go('mult-practice');
-  runMultQuestion();
+/* ---------- Time-boxed practice: Multiplication + Blitz ----------
+   No per-question limit — the whole session runs against one clock, and the score is simply
+   how many problems you solve before it runs out. Sharing this one engine between Multiplication
+   and Blitz keeps their setup, practice and results screens (and this scoring model) consistent. */
+function randDigitNumber(maxDigits){
+  const d = randInt(1, Math.max(1, maxDigits));
+  return randInt(d===1?1:Math.pow(10,d-1), Math.pow(10,d)-1);
 }
-function runMultQuestion(){
-  document.getElementById('mult-qcount').textContent = `${session.qIndex+1}/${session.total}`;
-  const a = randInt(multSettings.digitsA===1?1:Math.pow(10,multSettings.digitsA-1), Math.pow(10,multSettings.digitsA)-1);
-  const b = randInt(multSettings.digitsB===1?1:Math.pow(10,multSettings.digitsB-1), Math.pow(10,multSettings.digitsB)-1);
-  session.current = {a,b,answer:a*b};
-  session.startTime = Date.now();
-  document.getElementById('mult-problem').textContent = `${a} × ${b}`;
-  if(multSettings.voice){
-    queueSpeak(`${a} times ${b}`);
-    if(multSettings.voiceInput){
-      // Start listening while the problem is still being read out, not after — see the
-      // matching comment in runFaQuestion for why.
-      ttsQueue.primeBeforeNext(MIC_PRIME_LEAD_MS, ()=>{ if(session && session.kind==='mult') startListening(); });
-    }
+function genTimedProblem(){
+  if(session.kind==='mult'){
+    const a = randInt(multSettings.digitsA===1?1:Math.pow(10,multSettings.digitsA-1), Math.pow(10,multSettings.digitsA)-1);
+    const b = randInt(multSettings.digitsB===1?1:Math.pow(10,multSettings.digitsB-1), Math.pow(10,multSettings.digitsB)-1);
+    return {type:'mult', a, b, answer:a*b};
   }
-  beginAnswerPhase(multSettings.time);
+  if(session.pattern==='mult'){
+    const a = randDigitNumber(blitzSettings.maxDigits);
+    const b = randDigitNumber(blitzSettings.maxDigits);
+    return {type:'mult', a, b, answer:a*b};
+  }
+  const rows = randInt(2, Math.max(2, blitzSettings.rows));
+  const nums = Array.from({length:rows}, ()=>randDigitNumber(blitzSettings.maxDigits));
+  return {type:'add', nums, answer: nums.reduce((s,n)=>s+n,0)};
+}
+function timedProblemLabel(p){
+  return p.type==='mult' ? `${p.a} × ${p.b}` : p.nums.join(' + ');
+}
+function timedVoicePhrase(p){
+  return p.type==='mult' ? `${p.a} times ${p.b}` : p.nums.join(' plus ');
+}
+function renderTimedProblem(p){
+  const el = document.getElementById('timed-problem');
+  el.innerHTML = p.type==='mult'
+    ? `<div class="mult-problem">${p.a} × ${p.b}</div>`
+    : `<div class="add-column">${p.nums.map((n,i)=>`<div class="add-row">${i===0?'':'+ '}${n}</div>`).join('')}</div>`;
+}
+
+function startTimedSession(kind, fromReplay){
+  const settings = settingsFor(kind);
+  const chips = kind==='mult'
+    ? [multSettings.digitsA+'×'+multSettings.digitsB+' digits', formatDuration(multSettings.duration)+' session']
+    : [blitzSettings.pattern==='mult'?'Multiplication':'Addition',
+       blitzSettings.pattern==='add' ? ('up to '+blitzSettings.rows+' rows') : null,
+       'up to '+blitzSettings.maxDigits+' digits', formatDuration(blitzSettings.duration)+' session'
+      ].filter(Boolean);
+  if(!fromReplay){
+    saveRecent(kind==='mult'
+      ? {kind:'mult', title:'Multiplication', chips, settings:{...multSettings}}
+      : {kind:'blitz', title:'Blitz — '+(blitzSettings.pattern==='mult'?'Multiplication':'Addition'), chips, settings:{...blitzSettings}});
+  }
+  if(settings.voice) loadPiper().catch(()=>{});
+  if(settings.voiceInput) primeMicPermission();
+  session = {
+    kind, pattern: kind==='blitz' ? blitzSettings.pattern : null,
+    active:false, score:0, results:[], chips, duration:settings.duration, timeLeft:settings.duration
+  };
+  go('timed-practice');
+  document.getElementById('timed-score').textContent = '0';
+  document.getElementById('timed-timer').textContent = formatDuration(session.timeLeft);
+  const input = document.getElementById('timed-input');
+  const micEl = document.getElementById('timed-mic-status');
+  micEl.classList.remove('on','preparing');
+  if(settings.voiceInput){
+    input.style.display = 'none';
+    micEl.classList.add('preparing');
+    document.getElementById('timed-mic-text').textContent = 'Preparing microphone…';
+  } else {
+    input.style.display = '';
+    input.value = ''; input.placeholder = 'Enter answer';
+  }
+  document.getElementById('timed-problem').innerHTML = '<div class="starting-text">Starting…</div>';
+  // A short beat before the clock actually starts, so the first problem doesn't ambush you.
+  track(setTimeout(()=>{
+    if(!session || session.kind!==kind) return;
+    session.active = true;
+    session.tickStart = Date.now();
+    track(setInterval(tickTimedSession, 1000));
+    runTimedQuestion();
+    if(!settings.voiceInput) track(setTimeout(()=>document.getElementById('timed-input').focus(), 30));
+  }, 900));
+}
+function tickTimedSession(){
+  if(!session || !session.active) return;
+  session.timeLeft--;
+  document.getElementById('timed-timer').textContent = formatDuration(Math.max(0, session.timeLeft));
+  if(session.timeLeft <= 0) endTimedSession();
+}
+function runTimedQuestion(){
+  const p = genTimedProblem();
+  session.current = p;
+  session.qStartTime = Date.now();
+  renderTimedProblem(p);
+  const settings = settingsFor(session.kind==='mult' ? 'mult' : 'blitz');
+  const input = document.getElementById('timed-input');
+  if(input && !settings.voiceInput) input.value = '';
+  if(settings.voice){
+    queueSpeak(timedVoicePhrase(p));
+    if(settings.voiceInput){
+      // Start listening while the problem is still being read out, not after — recognizer.start()
+      // has its own startup latency (see the matching comment in runFaQuestion).
+      ttsQueue.primeBeforeNext(MIC_PRIME_LEAD_MS, ()=>{ if(session && session.active) startListening(); });
+    }
+  } else if(settings.voiceInput){
+    startListening();
+  }
+}
+function onTimedInput(){
+  if(!session || !session.active) return;
+  const val = document.getElementById('timed-input').value.trim();
+  if(val==='') return;
+  const given = parseInt(val,10);
+  if(!isNaN(given) && given===session.current.answer) resolveTimedQuestion();
+}
+function resolveTimedQuestion(){
+  if(!session || !session.active) return;
+  session.score++;
+  document.getElementById('timed-score').textContent = session.score;
+  session.results.push({
+    label: timedProblemLabel(session.current), answer: session.current.answer,
+    time: (Date.now()-session.qStartTime)/1000, elapsed: (Date.now()-session.tickStart)/1000
+  });
+  runTimedQuestion();
+}
+function endTimedSession(){
+  if(!session) return;
+  session.active = false;
+  clearAllTimers();
+  stopListening();
+  finishTimedSession();
+}
+function retryTimedSession(){
+  startTimedSession(session.kind, true);
+}
+
+/* Cumulative-solved-over-time line: single series, so no legend needed (see dataviz guidance) — the
+   chart title/section label already says what's plotted. Percentage viewBox needs no measurement. */
+function buildTimedLineChart(results, duration){
+  const w=100, h=40, pad=3;
+  const maxY = Math.max(results.length, 1);
+  const x = t => ((Math.min(t,duration)/duration)*w).toFixed(2);
+  const y = c => (h - pad - (c/maxY)*(h-pad*2)).toFixed(2);
+  let d = `M0,${y(0)}`, cum = 0;
+  results.forEach(r=>{
+    const px = x(r.elapsed);
+    d += ` L${px},${y(cum)}`;
+    cum++;
+    d += ` L${px},${y(cum)}`;
+  });
+  d += ` L${w},${y(cum)}`;
+  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`
+    + `<line class="qa-baseline" x1="0" y1="${(h-pad).toFixed(2)}" x2="${w}" y2="${(h-pad).toFixed(2)}"/>`
+    + `<path d="${d}" class="timed-line"/></svg>`;
+}
+function finishTimedSession(){
+  const results = session.results;
+  document.getElementById('timed-results-title').textContent =
+    session.kind==='mult' ? 'Multiplication' : ('Blitz — '+(session.pattern==='mult'?'Multiplication':'Addition'));
+  document.getElementById('timed-results-score').textContent = results.length;
+  document.getElementById('timed-results-chips').innerHTML = (session.chips||[]).map(c=>`<div class="chip">${c}</div>`).join('');
+  document.getElementById('timed-chart').innerHTML = buildTimedLineChart(results, session.duration);
+  const statsEl = document.getElementById('timed-stats-table');
+  if(results.length){
+    const times = results.map(r=>r.time);
+    const avg = times.reduce((a,b)=>a+b,0)/times.length;
+    const sorted = [...times].sort((a,b)=>a-b);
+    const n = Math.min(3, sorted.length);
+    const fastAvg = sorted.slice(0,n).reduce((a,b)=>a+b,0)/n;
+    const slowAvg = sorted.slice(-n).reduce((a,b)=>a+b,0)/n;
+    const rows = [['AVG',avg], ['FASTEST',sorted[0]], ['SLOWEST',sorted[sorted.length-1]], [n+' FAST AVG',fastAvg], [n+' SLOW AVG',slowAvg]];
+    statsEl.innerHTML = rows.map(([label,val])=>
+      `<div class="stats-row"><div class="stats-label">${label}</div><div class="stats-pill">${val.toFixed(2)}s</div></div>`
+    ).join('');
+  } else {
+    statsEl.innerHTML = '<div class="empty-hint">No problems solved yet — try a longer session or an easier setting.</div>';
+  }
+  document.getElementById('timed-qa-list').innerHTML = results.map((r,i)=>`
+    <div class="qa-card ok">
+      <div class="qa-top"><div class="qa-num">Q${i+1}</div><div class="qa-time">${r.time.toFixed(1)}s</div></div>
+      <div class="qa-problem">${r.label}</div>
+      <div class="qa-answer-row"><div class="qa-answer-text">Answer <b>${r.answer}</b></div></div>
+    </div>`).join('');
+  go('timed-results');
 }
 
 /* ---------- Results ---------- */
@@ -1265,8 +1564,7 @@ function finishSession(){
   go('results');
 }
 function retrySession(){
-  if(session.kind==='fa') startFlashAnzan(true);
-  else startMultiplication(true);
+  startFlashAnzan(true); // this results screen is Flash Anzan only now
 }
 
 /* ---------- Tips & Tricks content ---------- */
