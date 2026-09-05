@@ -21,8 +21,6 @@
     --accent:#a6ff4d;
     --accent-dim:#7fce38;
     --danger:#ff5d5d;
-    --grad-a:#8c5aff;
-    --grad-b:#4a7cff;
     --radius-lg:20px;
     --radius-md:14px;
     --radius-sm:10px;
@@ -66,9 +64,10 @@
   .mode-card:active{transform:scale(0.98);}
   .mode-icon{
     width:44px; height:44px; border-radius:14px; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; font-size:20px;
-    background:linear-gradient(135deg, var(--grad-a), var(--grad-b));
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(166,255,77,0.08); border:1px solid rgba(166,255,77,0.16); color:var(--accent);
   }
+  .mode-icon svg{width:21px; height:21px; display:block;}
   .mode-info h3{margin:0 0 2px; font-size:16px; font-weight:700;}
   .mode-info p{margin:0; font-size:12.5px; color:var(--text-dim); line-height:1.35;}
   .mode-arrow{margin-left:auto; color:var(--text-dim); font-size:20px;}
@@ -123,7 +122,7 @@
   /* Voice Lab */
   .engine-tabs{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
   .engine-tab{
-    flex:1 1 calc(50% - 8px); background:var(--chip); border:1px solid var(--chip-border); color:var(--text-mid);
+    flex:1 1 0; background:var(--chip); border:1px solid var(--chip-border); color:var(--text-mid);
     font-size:13.5px; font-weight:700; padding:11px 6px; border-radius:12px;
   }
   .engine-tab.active{background:rgba(166,255,77,0.15); border-color:var(--accent-dim); color:var(--accent);}
@@ -239,7 +238,7 @@
     <div class="scroll-region">
       <div class="mode-grid">
         <div class="mode-card" onclick="go('fa-setup')">
-          <div class="mode-icon">⚡</div>
+          <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg></div>
           <div class="mode-info">
             <h3>Flash Anzan</h3>
             <p>Rapid-fire addition &amp; subtraction, read aloud</p>
@@ -247,7 +246,7 @@
           <div class="mode-arrow">›</div>
         </div>
         <div class="mode-card" onclick="go('mult-setup')">
-          <div class="mode-icon">✕</div>
+          <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
           <div class="mode-info">
             <h3>Multiplication</h3>
             <p>Timed multiplication drills, read aloud</p>
@@ -255,7 +254,7 @@
           <div class="mode-arrow">›</div>
         </div>
         <div class="mode-card" onclick="go('tips')">
-          <div class="mode-icon">💡</div>
+          <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.45.9 1.02.9 1.6v.5h5.2v-.5c0-.58.3-1.15.9-1.6A6 6 0 0 0 12 3Z"/></svg></div>
           <div class="mode-info">
             <h3>Tips &amp; Tricks</h3>
             <p>Speed shortcuts, squares, cubes, tables</p>
@@ -263,10 +262,10 @@
           <div class="mode-arrow">›</div>
         </div>
         <div class="mode-card" onclick="go('voicelab')">
-          <div class="mode-icon">🎙️</div>
+          <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
           <div class="mode-info">
             <h3>Voice Lab</h3>
-            <p>Try open-source TTS engines &amp; pick your voice</p>
+            <p>Open-source TTS engines, streamed for low latency</p>
           </div>
           <div class="mode-arrow">›</div>
         </div>
@@ -309,7 +308,7 @@
         <div class="toggle on" id="fa-voice-toggle" onclick="toggleVoice('fa')"><div class="knob"></div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub" id="fa-engine-summary">Browser default</div></div>
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="fa-engine-summary">Piper — Female (US)</div></div>
         <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
       </div>
       <div class="setting-row">
@@ -349,7 +348,7 @@
         <div class="toggle on" id="mult-voice-toggle" onclick="toggleVoice('mult')"><div class="knob"></div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub" id="mult-engine-summary">Browser default</div></div>
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="mult-engine-summary">Piper — Female (US)</div></div>
         <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
       </div>
       <div class="setting-row">
@@ -431,7 +430,6 @@
     <div class="subtitle">Test open-source TTS engines, then pick one</div>
     <div class="scroll-region">
       <div class="engine-tabs" id="engine-tabs">
-        <button class="engine-tab" data-engine="browser" onclick="selectEngine('browser')">Browser</button>
         <button class="engine-tab" data-engine="piper" onclick="selectEngine('piper')">Piper</button>
         <button class="engine-tab" data-engine="kokoro" onclick="selectEngine('kokoro')">Kokoro</button>
         <button class="engine-tab" data-engine="espeak" onclick="selectEngine('espeak')">eSpeak</button>
@@ -448,7 +446,7 @@
         <input type="text" id="lab-sample-text" class="lab-input" value="add fourteen, that is, forty seven times eight">
       </div>
 
-      <button class="btn-primary" style="width:100%; margin-top:14px;" onclick="playSample()" id="lab-play-btn">▶ Play sample</button>
+      <button class="btn-primary" style="width:100%; margin-top:14px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="playSample()" id="lab-play-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8V4Z"/></svg>Play sample</button>
       <div class="lab-status" id="lab-status"></div>
       <pre class="lab-error" id="lab-error" style="display:none;"></pre>
       <button class="btn-ghost" style="width:100%; margin-top:6px; display:none;" id="lab-copy-btn" onclick="copyLabError()">Copy error text</button>
@@ -465,13 +463,20 @@
 function go(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
-  window.speechSynthesis.cancel();
+  ttsQueue.clear();
   stopListening();
   clearAllTimers();
   if(session) session.resolved = true;
   if(view==='home') renderRecent();
   if(view==='tips' && !document.getElementById('tips-scroll').childElementCount) renderTips();
   if(view==='voicelab') initVoiceLab();
+  if(view==='fa-setup' || view==='mult-setup'){
+    // Warm the model and mic permission while the user is still adjusting settings,
+    // so the first question of the session has zero cold-start latency.
+    loadEngineModule(ttsEngine).catch(()=>{});
+    const settings = view==='fa-setup' ? faSettings : multSettings;
+    if(settings.voiceInput) primeMicPermission();
+  }
 }
 
 let timers=[];
@@ -507,51 +512,20 @@ function toggleVoiceInput(kind){
   const s = kind==='fa'?faSettings:multSettings;
   s.voiceInput = !s.voiceInput;
   document.getElementById(kind+'-voicein-toggle').classList.toggle('on', s.voiceInput);
-}
-
-/* ---------- Speech output (TTS) ---------- */
-let ttsVoices = [];
-let selectedVoiceURI = localStorage.getItem('voiceURI') || '';
-
-function populateVoiceSelects(){
-  if(!('speechSynthesis' in window)) return;
-  const all = window.speechSynthesis.getVoices();
-  if(!all.length) return;
-  // Keep this short and fast: only US and Indian English, max 5 voices each, instead of
-  // every language/locale a desktop browser might report (sometimes 200+).
-  const norm = v => v.lang.replace('_','-').toLowerCase();
-  const rank = v => (v.default?0:1) + (v.localService?0:2); // prefer default/local voices first
-  const usVoices = all.filter(v=>norm(v).startsWith('en-us')).sort((a,b)=>rank(a)-rank(b)).slice(0,5);
-  const inVoices = all.filter(v=>norm(v).startsWith('en-in')).sort((a,b)=>rank(a)-rank(b)).slice(0,5);
-  ttsVoices = [...usVoices, ...inVoices];
-  if(!ttsVoices.length) ttsVoices = all.filter(v=>/^en/i.test(v.lang)).slice(0,10); // fallback: any English
-  if(!ttsVoices.length) ttsVoices = all.slice(0,10); // last resort: device has no English voice at all
-}
-function setVoice(uri){
-  selectedVoiceURI = uri;
-  localStorage.setItem('voiceURI', uri);
-  const el = document.getElementById('lab-voice-select');
-  if(el && ttsEngine==='browser') el.value = uri;
-}
-if('speechSynthesis' in window){
-  window.speechSynthesis.onvoiceschanged = populateVoiceSelects;
-  populateVoiceSelects();
-}
-
-function speak(text, rate){
-  if(!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = rate || 1.05;
-  u.pitch = 1;
-  if(selectedVoiceURI){
-    const v = ttsVoices.find(v=>v.voiceURI===selectedVoiceURI);
-    if(v) u.voice = v;
-  }
-  window.speechSynthesis.speak(u);
+  if(s.voiceInput) primeMicPermission();
 }
 
 /* ---------- Speech input (recognition) ---------- */
+let micPrimed = false;
+function primeMicPermission(){
+  // Ask for the mic up front (setup screen / toggle-on) so the permission prompt's latency
+  // never eats into the first practice question's listening window.
+  if(micPrimed || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  micPrimed = true;
+  navigator.mediaDevices.getUserMedia({audio:true})
+    .then(stream=>stream.getTracks().forEach(t=>t.stop()))
+    .catch(()=>{ micPrimed = false; });
+}
 let recognizer = null;
 let recognitionActive = false;
 let speechSupported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
@@ -646,12 +620,11 @@ function parseSpokenAnswer(transcript){
 }
 
 /* ---------- Open-source TTS engines (Voice Lab) ---------- */
-// All engines load lazily from esm.sh (bundled ESM CDN) the first time they're used,
-// so the app itself stays a small static site with no build step or bundled model weights.
+// All engines load lazily from a CDN (bundled ESM) the first time they're used, so the app
+// itself stays a small static site with no build step or bundled model weights.
 const ENGINE_INFO = {
-  browser: {label:'Browser', desc:'Your device\'s built-in text-to-speech (Web Speech API). Zero download, works instantly, quality varies by phone.'},
   piper: {label:'Piper', desc:'Rhasspy Piper (MIT). Lightweight ONNX voices, ~20\u201360MB per voice downloaded once and cached. Clear, slightly synthetic sound, runs on plain WASM \u2014 no WebGPU needed.'},
-  kokoro: {label:'Kokoro', desc:'Kokoro-82M (Apache-2.0). The most natural-sounding of the bunch. Bigger download (~80MB+ quantized) and needs more CPU/GPU \u2014 best on newer phones.'},
+  kokoro: {label:'Kokoro', desc:'Kokoro-82M (Apache-2.0). The most natural-sounding of the bunch. Uses WebGPU when the device supports it, and streams sentence-by-sentence so playback starts before the whole clip finishes generating.'},
   espeak: {label:'eSpeak', desc:'Classic eSpeak formant synthesizer via mespeak.js (GPL). Tiny (~1MB), instant, robotic \u201cSpeak & Spell\u201d voice \u2014 good fallback, not a quality upgrade.'}
 };
 const ENGINE_VOICES = {
@@ -675,7 +648,8 @@ const ENGINE_VOICES = {
   ]
 };
 
-let ttsEngine = localStorage.getItem('ttsEngine') || 'browser';
+let ttsEngine = localStorage.getItem('ttsEngine') || 'piper';
+if(!ENGINE_INFO[ttsEngine]) ttsEngine = 'piper'; // migrate away from the removed browser-voice option
 let engineVoiceId = JSON.parse(localStorage.getItem('engineVoiceId')||'{}');
 if(!engineVoiceId.piper) engineVoiceId.piper = ENGINE_VOICES.piper[0].id;
 if(!engineVoiceId.kokoro) engineVoiceId.kokoro = ENGINE_VOICES.kokoro[0].id;
@@ -684,7 +658,6 @@ if(!engineVoiceId.espeak) engineVoiceId.espeak = ENGINE_VOICES.espeak[0].id;
 const engineModules = {};   // cached loaded module/instance per engine
 const engineLoading = {};   // in-flight load promises per engine
 
-const loadedMespeakVoices = new Set();
 const MESPEAK_BASE = 'https://cdn.jsdelivr.net/npm/mespeak@2.0.2/';
 const MESPEAK_VOICE_FILES = {'en-us':'voices/en/en-us.json', 'en-rp':'voices/en/en-rp.json', 'en-sc':'voices/en/en-sc.json'};
 
@@ -710,9 +683,17 @@ function loadEngineModule(engine){
       .then(async mod=>{
         const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS);
         if(!KokoroTTS) throw new Error('[import] Kokoro module loaded but KokoroTTS export was not found.');
+        const modelId = 'onnx-community/Kokoro-82M-v1.0-ONNX';
         let tts;
         try{
-          tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {dtype:'q8', device:'wasm'});
+          // WebGPU cuts inference time dramatically over WASM when the device supports it;
+          // fall straight back to the quantized WASM path everywhere else (or if WebGPU init fails).
+          if(navigator.gpu){
+            try{ tts = await KokoroTTS.from_pretrained(modelId, {dtype:'fp32', device:'webgpu'}); }
+            catch(gpuErr){ tts = await KokoroTTS.from_pretrained(modelId, {dtype:'q8', device:'wasm'}); }
+          } else {
+            tts = await KokoroTTS.from_pretrained(modelId, {dtype:'q8', device:'wasm'});
+          }
         }catch(err){
           throw new Error('[model download/init] Kokoro model failed to load: '+describeErr(err));
         }
@@ -732,9 +713,11 @@ function loadEngineModule(engine){
                        : null;
         if(!meSpeak) throw new Error('[import] mespeak module loaded but no speak() function found on it.');
         try{
-          await new Promise((resolve,reject)=>{
-            meSpeak.loadConfig(MESPEAK_BASE+'src/mespeak_config.json', (ok)=> ok ? resolve() : reject(new Error('mespeak config did not load')));
-          });
+          // This build of mespeak's loadConfig() takes a single argument and silently ignores
+          // any callback passed alongside it, so awaiting a callback here hangs forever. Instead,
+          // fire the load and poll isConfigLoaded() (a real, synchronous flag it exposes).
+          meSpeak.loadConfig(MESPEAK_BASE+'src/mespeak_config.json');
+          await waitUntilTrue(()=>meSpeak.isConfigLoaded(), 5000, 25);
         }catch(err){ throw new Error('[model download/init] mespeak config failed to load: '+describeErr(err)); }
         engineModules[engine] = meSpeak;
         return meSpeak;
@@ -749,39 +732,61 @@ function describeErr(err){
   if(!err) return 'unknown error';
   return err.message || String(err);
 }
-
-function encodeWav(float32, sampleRate){
-  const buf = new ArrayBuffer(44 + float32.length*2);
-  const view = new DataView(buf);
-  const writeStr=(o,s)=>{ for(let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); };
-  writeStr(0,'RIFF'); view.setUint32(4, 36+float32.length*2, true); writeStr(8,'WAVE');
-  writeStr(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
-  view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true);
-  writeStr(36,'data'); view.setUint32(40, float32.length*2, true);
-  let off=44;
-  for(let i=0;i<float32.length;i++){
-    const s = Math.max(-1, Math.min(1, float32[i]));
-    view.setInt16(off, s<0 ? s*0x8000 : s*0x7fff, true);
-    off += 2;
-  }
-  return new Blob([buf], {type:'audio/wav'});
+function waitUntilTrue(predicate, timeoutMs, intervalMs){
+  return new Promise((resolve, reject)=>{
+    const start = Date.now();
+    (function poll(){
+      if(predicate()) return resolve();
+      if(Date.now()-start >= timeoutMs) return reject(new Error('timed out waiting'));
+      setTimeout(poll, intervalMs);
+    })();
+  });
 }
 
-async function synthesizeWithEngine(engine, text){
-  if(engine==='piper'){
-    const mod = await loadEngineModule('piper');
-    try{
-      return await mod.predict({text, voiceId: engineVoiceId.piper});
-    }catch(err){ throw new Error('[inference] Piper predict() failed: '+describeErr(err)); }
-  }
+/* ---------- Low-latency playback: Web Audio + prefetch pipeline ----------
+   Practice sessions know the whole line-up of things to say before they need to say them
+   (the flash-anzan number sequence, the multiplication problem), so instead of synthesizing
+   speech on demand — which is what made Kokoro in particular feel laggy — every phrase is
+   kicked off for synthesis the moment it's known, cached by (engine, voice, text), and played
+   back through a single AudioContext via decoded PCM buffers rather than per-utterance
+   `<audio>` elements. By playback time the buffer is normally already sitting in cache. */
+let audioCtx = null;
+function ensureAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
+function pcmToAudioBuffer(float32, sampleRate){
+  const ctx = ensureAudioCtx();
+  const buf = ctx.createBuffer(1, float32.length, sampleRate);
+  buf.copyToChannel(float32 instanceof Float32Array ? float32 : Float32Array.from(float32), 0);
+  return buf;
+}
+async function blobToAudioBuffer(blob){
+  const ctx = ensureAudioCtx();
+  return await ctx.decodeAudioData(await blob.arrayBuffer());
+}
+
+const bufferCache = new Map();    // "engine|voice|text" -> AudioBuffer, ready to play instantly
+const bufferInFlight = new Map(); // same key -> Promise<AudioBuffer>, de-dupes concurrent requests
+function cacheKey(engine, voiceId, text){ return engine+'|'+voiceId+'|'+text; }
+
+async function synthesizeToAudioBuffer(engine, text){
   if(engine==='kokoro'){
     const {tts} = await loadEngineModule('kokoro');
-    let audio;
     try{
-      audio = await tts.generate(text, {voice: engineVoiceId.kokoro});
-    }catch(err){ throw new Error('[inference] Kokoro generate() failed: '+describeErr(err)); }
-    if(typeof audio.toBlob === 'function') return await audio.toBlob();
-    return encodeWav(audio.audio, audio.sampling_rate || audio.sample_rate || 24000);
+      for await(const {audio} of tts.stream(text, {voice: engineVoiceId.kokoro})){
+        return pcmToAudioBuffer(audio.audio, audio.sampling_rate||audio.sample_rate||24000);
+      }
+      throw new Error('Kokoro produced no audio.');
+    }catch(err){ throw new Error('[inference] Kokoro generation failed: '+describeErr(err)); }
+  }
+  if(engine==='piper'){
+    const mod = await loadEngineModule('piper');
+    let blob;
+    try{ blob = await mod.predict({text, voiceId: engineVoiceId.piper}); }
+    catch(err){ throw new Error('[inference] Piper predict() failed: '+describeErr(err)); }
+    return await blobToAudioBuffer(blob);
   }
   if(engine==='espeak'){
     const meSpeak = await loadEngineModule('espeak');
@@ -795,29 +800,112 @@ async function synthesizeWithEngine(engine, text){
       });
     }catch(err){ throw new Error('[model download/init] mespeak voice failed to load: '+describeErr(err)); }
     let bytes;
-    try{
-      bytes = meSpeak.speak(text, {rawdata:'array'});
-    }catch(err){ throw new Error('[inference] mespeak synthesis failed: '+describeErr(err)); }
+    try{ bytes = meSpeak.speak(text, {rawdata:'array'}); }
+    catch(err){ throw new Error('[inference] mespeak synthesis failed: '+describeErr(err)); }
     if(!bytes || !bytes.length) throw new Error('[inference] mespeak returned no audio data.');
-    return new Blob([new Uint8Array(bytes)], {type:'audio/wav'});
+    return await blobToAudioBuffer(new Blob([new Uint8Array(bytes)], {type:'audio/wav'}));
   }
   throw new Error('Unknown engine: '+engine);
 }
 
-function playBlob(blob){
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-  audio.play().catch(()=>{});
-  audio.onended = ()=> URL.revokeObjectURL(url);
+/* Cached + de-duped: safe to call for the same phrase from both a prefetch pass and playback. */
+function getAudioBuffer(engine, voiceId, text){
+  const key = cacheKey(engine, voiceId, text);
+  if(bufferCache.has(key)) return Promise.resolve(bufferCache.get(key));
+  if(bufferInFlight.has(key)) return bufferInFlight.get(key);
+  const p = synthesizeToAudioBuffer(engine, text).then(buf=>{
+    bufferCache.set(key, buf);
+    bufferInFlight.delete(key);
+    return buf;
+  }).catch(err=>{ bufferInFlight.delete(key); throw err; });
+  bufferInFlight.set(key, p);
+  return p;
+}
+async function runWithConcurrency(items, limit, worker){
+  let i = 0;
+  await Promise.all(Array.from({length:Math.min(limit, items.length)}, async ()=>{
+    while(i < items.length){ await worker(items[i++]).catch(()=>{}); }
+  }));
+}
+/* Fire-and-forget: warms the cache for phrases we already know we'll need to say soon. */
+function prefetchPhrases(list){
+  const engine = ttsEngine;
+  const voiceId = engineVoiceId[engine] || '';
+  runWithConcurrency([...new Set(list)], engine==='kokoro' ? 2 : 3, text=>getAudioBuffer(engine, voiceId, text));
 }
 
-/* Used everywhere in practice sessions instead of calling speak()/speechSynthesis directly. */
-function speakUnified(text, rate){
-  if(ttsEngine==='browser'){ speak(text, rate); return; }
-  synthesizeWithEngine(ttsEngine, text).then(playBlob).catch(err=>{
-    console.error('TTS engine error, falling back to browser voice:', err);
-    speak(text, rate); // graceful fallback so a broken engine never silences practice
-  });
+/* Ordered, non-overlapping playback queue. Synthesis for queued items races ahead in the
+   background (see prefetchPhrases / push below); this only serializes the actual audio output
+   so fast flashing never garbles multiple utterances on top of each other. */
+const ttsQueue = (function(){
+  let items = [];
+  let playing = false;
+  let currentSource = null;
+  let idleWaiters = [];
+  function playBuffer(buf){
+    return new Promise(resolve=>{
+      const ctx = ensureAudioCtx();
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      currentSource = src;
+      src.onended = ()=>{ if(currentSource===src) currentSource=null; resolve(); };
+      try{ src.start(); }catch(err){ resolve(); }
+    });
+  }
+  async function pump(){
+    if(playing) return;
+    playing = true;
+    while(items.length){
+      const p = items.shift();
+      try{ await playBuffer(await p); }
+      catch(err){ console.error('TTS playback error:', err); }
+    }
+    playing = false;
+    idleWaiters.splice(0).forEach(r=>r());
+  }
+  return {
+    push(bufferOrPromise){ items.push(Promise.resolve(bufferOrPromise)); pump(); },
+    clear(){
+      items = [];
+      if(currentSource){ try{ currentSource.stop(); }catch(err){} currentSource=null; }
+    },
+    whenIdle(){
+      if(!playing && !items.length) return Promise.resolve();
+      return new Promise(resolve=>idleWaiters.push(resolve));
+    }
+  };
+})();
+
+/* Used everywhere in practice sessions: enqueues a phrase, falling back to Piper if the
+   selected engine fails, so a broken engine never silences practice. */
+function queueSpeak(text){
+  if(!text) return;
+  const engine = ttsEngine;
+  const voiceId = engineVoiceId[engine] || '';
+  let p = getAudioBuffer(engine, voiceId, text);
+  if(engine !== 'piper'){
+    p = p.catch(err=>{
+      console.error('['+engine+'] TTS failed, falling back to Piper:', err);
+      return getAudioBuffer('piper', engineVoiceId.piper, text);
+    });
+  }
+  ttsQueue.push(p);
+}
+
+/* Streams long-form text (Voice Lab sample phrases) sentence-by-sentence: each clause is queued
+   for playback as soon as Kokoro finishes generating it, instead of waiting on the whole string. */
+async function streamKokoroToQueue(text){
+  const {tts} = await loadEngineModule('kokoro');
+  const splitPattern = /(?<=[.!?;:])\s+/;
+  let any = false;
+  for await(const {text:chunkText, audio} of tts.stream(text, {voice: engineVoiceId.kokoro, split_pattern: splitPattern})){
+    any = true;
+    const buf = pcmToAudioBuffer(audio.audio, audio.sampling_rate||audio.sample_rate||24000);
+    bufferCache.set(cacheKey('kokoro', engineVoiceId.kokoro, chunkText), buf);
+    ttsQueue.push(buf);
+  }
+  if(!any) throw new Error('[inference] Kokoro produced no audio.');
 }
 
 /* ---- Voice Lab UI ---- */
@@ -828,25 +916,16 @@ function selectEngine(engine, skipSave){
   document.querySelectorAll('.engine-tab').forEach(b=>b.classList.toggle('active', b.dataset.engine===engine));
   document.getElementById('engine-desc').textContent = ENGINE_INFO[engine].desc;
   const sel = document.getElementById('lab-voice-select');
-  sel.innerHTML='';
-  if(engine==='browser'){
-    populateVoiceSelects();
-    sel.innerHTML = '<option value="">Default</option>' + ttsVoices.map(v=>
-      `<option value="${v.voiceURI}">${v.name} (${v.lang})</option>`
-    ).join('');
-    sel.value = selectedVoiceURI;
-  } else {
-    sel.innerHTML = (ENGINE_VOICES[engine]||[]).map(v=>
-      `<option value="${v.id}">${v.label}</option>`
-    ).join('');
-    sel.value = engineVoiceId[engine];
-  }
-  if(!skipSave){ ttsEngine = engine; document.getElementById('lab-status').textContent=''; document.getElementById('lab-status').className='lab-status'; }
-  else { ttsEngine = engine; }
+  sel.innerHTML = (ENGINE_VOICES[engine]||[]).map(v=>
+    `<option value="${v.id}">${v.label}</option>`
+  ).join('');
+  sel.value = engineVoiceId[engine];
+  ttsEngine = engine;
+  if(!skipSave){ document.getElementById('lab-status').textContent=''; document.getElementById('lab-status').className='lab-status'; }
 }
 function setEngineVoice(val){
-  if(ttsEngine==='browser'){ setVoice(val); }
-  else { engineVoiceId[ttsEngine] = val; localStorage.setItem('engineVoiceId', JSON.stringify(engineVoiceId)); }
+  engineVoiceId[ttsEngine] = val;
+  localStorage.setItem('engineVoiceId', JSON.stringify(engineVoiceId));
 }
 async function playSample(){
   const text = document.getElementById('lab-sample-text').value.trim() || 'testing one two three';
@@ -854,16 +933,21 @@ async function playSample(){
   const status = document.getElementById('lab-status');
   const errBox = document.getElementById('lab-error');
   const copyBtn = document.getElementById('lab-copy-btn');
-  status.className='lab-status'; status.textContent = ttsEngine==='browser' ? 'Playing…' : 'Loading model (first time can take a moment)…';
+  status.className='lab-status'; status.textContent = 'Loading model (first time can take a moment)…';
   errBox.style.display='none'; errBox.textContent=''; copyBtn.style.display='none';
   btn.disabled = true;
+  ttsQueue.clear();
   try{
-    if(ttsEngine==='browser'){ speak(text, 1.0); }
-    else{
-      const blob = await synthesizeWithEngine(ttsEngine, text);
-      playBlob(blob);
+    if(ttsEngine==='kokoro'){
+      status.textContent = 'Streaming…';
+      await streamKokoroToQueue(text);
+    } else {
+      const buf = await getAudioBuffer(ttsEngine, engineVoiceId[ttsEngine]||'', text);
+      status.textContent = 'Playing…';
+      ttsQueue.push(buf);
     }
-    status.textContent = 'Playing ✓'; status.classList.add('ok');
+    await ttsQueue.whenIdle();
+    status.textContent = 'Played'; status.classList.add('ok');
   }catch(err){
     console.error(err);
     const msg = (err && err.message) ? err.message : String(err);
@@ -881,7 +965,7 @@ function copyLabError(){
   if(navigator.clipboard && txt){
     navigator.clipboard.writeText(txt).then(()=>{
       const b = document.getElementById('lab-copy-btn');
-      const old = b.textContent; b.textContent='Copied ✓';
+      const old = b.textContent; b.textContent='Copied';
       setTimeout(()=>{ b.textContent = old; }, 1200);
     }).catch(()=>{});
   }
@@ -890,17 +974,13 @@ function useThisVoice(){
   localStorage.setItem('ttsEngine', ttsEngine);
   updateEngineSummaries();
   const el = document.getElementById('lab-active-status');
-  el.textContent = 'Set as the active voice for Flash Anzan & Multiplication ✓';
+  el.textContent = 'Set as the active voice for Flash Anzan & Multiplication';
   el.className='lab-status ok';
 }
 function updateEngineSummaries(){
-  const label = ENGINE_INFO[ttsEngine] ? ENGINE_INFO[ttsEngine].label : 'Browser';
-  let voiceLabel = '';
-  if(ttsEngine!=='browser'){
-    const v = (ENGINE_VOICES[ttsEngine]||[]).find(v=>v.id===engineVoiceId[ttsEngine]);
-    voiceLabel = v ? ' — '+v.label : '';
-  }
-  const text = label + voiceLabel;
+  const label = ENGINE_INFO[ttsEngine] ? ENGINE_INFO[ttsEngine].label : 'Piper';
+  const v = (ENGINE_VOICES[ttsEngine]||[]).find(v=>v.id===engineVoiceId[ttsEngine]);
+  const text = label + (v ? ' — '+v.label : '');
   const a = document.getElementById('fa-engine-summary');
   const b = document.getElementById('mult-engine-summary');
   if(a) a.textContent = text;
@@ -990,7 +1070,11 @@ function beginAnswerPhase(timeLimitSeconds){
     labelEl.textContent = 'SAY YOUR ANSWER OUT LOUD';
     keypadEl.classList.remove('visible');
     micEl.classList.add('on');
-    track(setTimeout(()=>{ if(session && !session.resolved) startListening(); }, 350));
+    // Wait for the problem readout to actually finish (bounded, in case something stalls)
+    // instead of a blind fixed delay — starts the mic as soon as it's safe to, every time.
+    Promise.race([ttsQueue.whenIdle(), new Promise(r=>track(setTimeout(r, 2000)))]).then(()=>{
+      track(setTimeout(()=>{ if(session && !session.resolved) startListening(); }, 80));
+    });
   } else {
     labelEl.textContent = 'TYPE OUT YOUR ANSWER';
     micEl.classList.remove('on');
@@ -1043,6 +1127,8 @@ function startFlashAnzan(fromReplay){
       settings:{...faSettings}
     });
   }
+  if(faSettings.voice) loadEngineModule(ttsEngine).catch(()=>{});
+  if(faSettings.voiceInput) primeMicPermission();
   session = {kind:'fa', qIndex:0, total:faSettings.questions, results:[], resolved:true};
   go('fa-practice');
   runFaQuestion();
@@ -1069,14 +1155,21 @@ function runFaQuestion(){
   const {seq,total} = genFaSequence();
   session.current = {answer: total, seq};
   session.startTime = Date.now();
+  if(faSettings.voice){
+    // Kick off synthesis for the entire sequence right now, in parallel with the flashing
+    // that's about to start, so each "add N" is already sitting in cache by the time it flashes.
+    prefetchPhrases(seq.map(v=>(v<0?'less ':'add ')+Math.abs(v)).concat(['that is']));
+  }
   let i=0;
   function showNext(){
     if(i>=seq.length){
       numEl.textContent='';
       const timeLimit = Math.max(6, Math.round(faSettings.count*faSettings.speed/1000*0.6));
       if(faSettings.voice){
-        speakUnified('that is', 1.05);
-        track(setTimeout(()=>beginAnswerPhase(timeLimit), 650));
+        queueSpeak('that is');
+        Promise.race([ttsQueue.whenIdle(), new Promise(r=>track(setTimeout(r,1500)))]).then(()=>{
+          track(setTimeout(()=>beginAnswerPhase(timeLimit), 120));
+        });
       } else {
         beginAnswerPhase(timeLimit);
       }
@@ -1086,7 +1179,7 @@ function runFaQuestion(){
     numEl.textContent = Math.abs(v);
     numEl.className = 'flash-number ' + (v<0?'neg':'pos');
     if(faSettings.voice){
-      speakUnified((v<0?'less ':'add ') + Math.abs(v), Math.min(1.5, 900/faSettings.speed*1.1));
+      queueSpeak((v<0?'less ':'add ') + Math.abs(v));
     }
     i++;
     track(setTimeout(()=>{
@@ -1106,6 +1199,8 @@ function startMultiplication(fromReplay){
       settings:{...multSettings}
     });
   }
+  if(multSettings.voice) loadEngineModule(ttsEngine).catch(()=>{});
+  if(multSettings.voiceInput) primeMicPermission();
   session = {kind:'mult', qIndex:0, total:multSettings.questions, results:[], resolved:true};
   go('mult-practice');
   runMultQuestion();
@@ -1117,7 +1212,7 @@ function runMultQuestion(){
   session.current = {a,b,answer:a*b};
   session.startTime = Date.now();
   document.getElementById('mult-problem').textContent = `${a} × ${b}`;
-  if(multSettings.voice) speakUnified(`${a} times ${b}`, 1.0);
+  if(multSettings.voice) queueSpeak(`${a} times ${b}`);
   beginAnswerPhase(multSettings.time);
 }
 
