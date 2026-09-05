@@ -513,6 +513,7 @@ function primeMicPermission(){
     .then(stream=>stream.getTracks().forEach(t=>t.stop()))
     .catch(()=>{ micPrimed = false; });
 }
+const MIC_PRIME_LEAD_MS = 1500; // start the mic this far before the cue phrase finishes speaking
 let recognizer = null;
 let recognitionActive = false;
 // SpeechRecognition also silently fails to get a mic on an insecure origin, so treat that as
@@ -579,6 +580,7 @@ function ensureRecognizer(){
   return recognizer;
 }
 function startListening(){
+  if(recognitionActive) return; // already running (e.g. started early by the prime callback)
   const r = ensureRecognizer();
   if(!r){ showMicUnsupported(); return; }
   if(!session) return;
@@ -776,6 +778,8 @@ const ttsQueue = (function(){
   let playing = false;
   let currentSource = null;
   let idleWaiters = [];
+  let primeCallback = null; // {leadMs, fn} - one-shot, fires leadMs before the next-played buffer ends
+  let generation = 0;       // bumped by clear() so a callback already scheduled can no-op if cancelled
   function playBuffer(buf){
     return new Promise(resolve=>{
       const ctx = ensureAudioCtx();
@@ -783,6 +787,12 @@ const ttsQueue = (function(){
       src.buffer = buf;
       src.connect(ctx.destination);
       currentSource = src;
+      if(primeCallback){
+        const {leadMs, fn} = primeCallback;
+        const gen = generation;
+        primeCallback = null;
+        setTimeout(()=>{ if(gen===generation) fn(); }, Math.max(0, buf.duration*1000 - leadMs));
+      }
       src.onended = ()=>{ if(currentSource===src) currentSource=null; resolve(); };
       try{ src.start(); }catch(err){ resolve(); }
     });
@@ -802,12 +812,19 @@ const ttsQueue = (function(){
     push(bufferOrPromise){ items.push(Promise.resolve(bufferOrPromise)); pump(); },
     clear(){
       items = [];
+      primeCallback = null;
+      generation++;
       if(currentSource){ try{ currentSource.stop(); }catch(err){} currentSource=null; }
     },
     whenIdle(){
       if(!playing && !items.length) return Promise.resolve();
       return new Promise(resolve=>idleWaiters.push(resolve));
-    }
+    },
+    /* Arms a one-shot callback to fire `leadMs` before the very next item that starts playing
+       finishes. Used to start the mic while the cue phrase is still being spoken, since
+       recognizer.start() itself isn't instant — waiting until the phrase is fully done meant
+       the mic was still initializing right when the user started answering. */
+    primeBeforeNext(leadMs, fn){ primeCallback = {leadMs, fn}; }
   };
 })();
 
@@ -978,15 +995,22 @@ function beginAnswerPhase(timeLimitSeconds){
   if(settings.voiceInput){
     labelEl.textContent = 'SAY YOUR ANSWER OUT LOUD';
     keypadEl.classList.remove('visible');
-    // Shown as "preparing" (no pulse) until the mic actually engages — claiming "Listening"
-    // before that was misleading and made a working mic look broken.
-    micEl.classList.remove('on'); micEl.classList.add('preparing');
-    document.getElementById(kind+'-mic-text').textContent = 'Preparing microphone…';
-    // Wait for the problem readout to actually finish (bounded, in case something stalls)
-    // instead of a blind fixed delay — starts the mic as soon as it's safe to, every time.
-    Promise.race([ttsQueue.whenIdle(), new Promise(r=>track(setTimeout(r, 2000)))]).then(()=>{
-      track(setTimeout(()=>{ if(session && !session.resolved) startListening(); }, 80));
-    });
+    if(recognitionActive){
+      // The mic was already primed to start ~1.5s before the cue finished speaking (see
+      // MIC_PRIME_LEAD_MS), so by the time this UI actually appears it's already listening.
+      micEl.classList.remove('preparing'); micEl.classList.add('on');
+      document.getElementById(kind+'-mic-text').textContent = 'Listening…';
+    } else {
+      // Fallback path (e.g. voice readout is off, so there was no cue phrase to prime against):
+      // shown as "preparing" (no pulse) until the mic actually engages.
+      micEl.classList.remove('on'); micEl.classList.add('preparing');
+      document.getElementById(kind+'-mic-text').textContent = 'Preparing microphone…';
+      // Wait for the problem readout to actually finish (bounded, in case something stalls)
+      // instead of a blind fixed delay — starts the mic as soon as it's safe to, every time.
+      Promise.race([ttsQueue.whenIdle(), new Promise(r=>track(setTimeout(r, 2000)))]).then(()=>{
+        track(setTimeout(()=>{ if(session && !session.resolved) startListening(); }, 80));
+      });
+    }
   } else {
     labelEl.textContent = 'TYPE OUT YOUR ANSWER';
     micEl.classList.remove('on','preparing');
@@ -1079,6 +1103,12 @@ function runFaQuestion(){
       const timeLimit = Math.max(6, Math.round(faSettings.count*faSettings.speed/1000*0.6));
       if(faSettings.voice){
         queueSpeak('that is');
+        if(faSettings.voiceInput){
+          // Start listening while "that is" is still playing, not after — recognizer.start()
+          // has its own startup latency, and waiting for the phrase to fully finish first was
+          // eating into the beginning of what the user actually says.
+          ttsQueue.primeBeforeNext(MIC_PRIME_LEAD_MS, ()=>{ if(session && session.kind==='fa') startListening(); });
+        }
         Promise.race([ttsQueue.whenIdle(), new Promise(r=>track(setTimeout(r,1500)))]).then(()=>{
           track(setTimeout(()=>beginAnswerPhase(timeLimit), 120));
         });
@@ -1124,7 +1154,14 @@ function runMultQuestion(){
   session.current = {a,b,answer:a*b};
   session.startTime = Date.now();
   document.getElementById('mult-problem').textContent = `${a} × ${b}`;
-  if(multSettings.voice) queueSpeak(`${a} times ${b}`);
+  if(multSettings.voice){
+    queueSpeak(`${a} times ${b}`);
+    if(multSettings.voiceInput){
+      // Start listening while the problem is still being read out, not after — see the
+      // matching comment in runFaQuestion for why.
+      ttsQueue.primeBeforeNext(MIC_PRIME_LEAD_MS, ()=>{ if(session && session.kind==='mult') startListening(); });
+    }
+  }
   beginAnswerPhase(multSettings.time);
 }
 
