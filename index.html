@@ -120,12 +120,6 @@
   }
 
   /* Voice Lab */
-  .engine-tabs{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
-  .engine-tab{
-    flex:1 1 0; background:var(--chip); border:1px solid var(--chip-border); color:var(--text-mid);
-    font-size:13.5px; font-weight:700; padding:11px 6px; border-radius:12px;
-  }
-  .engine-tab.active{background:rgba(166,255,77,0.15); border-color:var(--accent-dim); color:var(--accent);}
   .engine-desc{color:var(--text-dim); font-size:12.5px; line-height:1.5; margin-bottom:14px;}
   .lab-sample-box{margin-top:8px;}
   .lab-input{
@@ -172,7 +166,8 @@
     background:var(--chip); border:1.5px dashed var(--chip-border); border-radius:14px;
     padding:clamp(14px,3vh,22px) 10px; margin-bottom:6px; color:var(--text-mid); font-size:14px; font-weight:600;
   }
-  .mic-status.on{display:flex;}
+  .mic-status.on, .mic-status.preparing{display:flex;}
+  .mic-status.preparing .mic-dot{background:var(--text-dim); animation:none;}
   .mic-dot{width:10px; height:10px; border-radius:50%; background:var(--danger); animation:pulse 1.1s infinite;}
   @keyframes pulse{0%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.3);}100%{opacity:1;transform:scale(1);}}
   .keypad{display:none; grid-template-columns:repeat(3,1fr); gap:8px;}
@@ -265,7 +260,7 @@
           <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
           <div class="mode-info">
             <h3>Voice Lab</h3>
-            <p>Open-source TTS engines, streamed for low latency</p>
+            <p>Piper voices, cached after the first play</p>
           </div>
           <div class="mode-arrow">›</div>
         </div>
@@ -308,7 +303,7 @@
         <div class="toggle on" id="fa-voice-toggle" onclick="toggleVoice('fa')"><div class="knob"></div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub" id="fa-engine-summary">Piper — Female (US)</div></div>
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="fa-engine-summary">Piper — Lessac (US)</div></div>
         <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
       </div>
       <div class="setting-row">
@@ -348,7 +343,7 @@
         <div class="toggle on" id="mult-voice-toggle" onclick="toggleVoice('mult')"><div class="knob"></div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub" id="mult-engine-summary">Piper — Female (US)</div></div>
+        <div><div class="setting-label">Voice</div><div class="setting-sub" id="mult-engine-summary">Piper — Lessac (US)</div></div>
         <button class="btn-ghost" style="padding:8px 16px; font-size:13px;" onclick="go('voicelab')">Change</button>
       </div>
       <div class="setting-row">
@@ -370,7 +365,7 @@
       <div class="countdown-block"><div class="countdown-label">Next question in</div><div class="countdown-num" id="fa-countdown">8</div></div>
       <div class="answer-label" id="fa-answer-label">TYPE OUT YOUR ANSWER</div>
       <div class="answer-box" id="fa-answer-box">&nbsp;</div>
-      <div class="mic-status" id="fa-mic-status"><div class="mic-dot"></div><span>Listening…</span></div>
+      <div class="mic-status" id="fa-mic-status"><div class="mic-dot"></div><span id="fa-mic-text">Listening…</span></div>
       <div class="keypad" id="fa-keypad"></div>
     </div>
   </div>
@@ -386,7 +381,7 @@
       <div class="countdown-block"><div class="countdown-label">Next question in</div><div class="countdown-num" id="mult-countdown">8</div></div>
       <div class="answer-label" id="mult-answer-label">TYPE OUT YOUR ANSWER</div>
       <div class="answer-box" id="mult-answer-box">&nbsp;</div>
-      <div class="mic-status" id="mult-mic-status"><div class="mic-dot"></div><span>Listening…</span></div>
+      <div class="mic-status" id="mult-mic-status"><div class="mic-dot"></div><span id="mult-mic-text">Listening…</span></div>
       <div class="keypad" id="mult-keypad"></div>
     </div>
   </div>
@@ -427,18 +422,13 @@
       <div class="backbtn" onclick="go('home')">‹</div>
       <h1>Voice Lab</h1>
     </div>
-    <div class="subtitle">Test open-source TTS engines, then pick one</div>
+    <div class="subtitle">Piper voices — pick one and test it</div>
     <div class="scroll-region">
-      <div class="engine-tabs" id="engine-tabs">
-        <button class="engine-tab" data-engine="piper" onclick="selectEngine('piper')">Piper</button>
-        <button class="engine-tab" data-engine="kokoro" onclick="selectEngine('kokoro')">Kokoro</button>
-        <button class="engine-tab" data-engine="espeak" onclick="selectEngine('espeak')">eSpeak</button>
-      </div>
-      <div class="engine-desc" id="engine-desc"></div>
+      <div class="engine-desc">Rhasspy Piper (MIT), runs fully offline in WASM. Every phrase you hear gets cached, so replaying it later is instant with no re-processing.</div>
 
       <div class="setting-row">
-        <div><div class="setting-label">Voice</div><div class="setting-sub">Available for the selected engine</div></div>
-        <select class="voice-select" id="lab-voice-select" onchange="setEngineVoice(this.value)"></select>
+        <div><div class="setting-label">Voice</div><div class="setting-sub">~60MB on first use, cached after that</div></div>
+        <select class="voice-select" id="lab-voice-select" onchange="setPiperVoice(this.value)"></select>
       </div>
 
       <div class="lab-sample-box">
@@ -450,9 +440,6 @@
       <div class="lab-status" id="lab-status"></div>
       <pre class="lab-error" id="lab-error" style="display:none;"></pre>
       <button class="btn-ghost" style="width:100%; margin-top:6px; display:none;" id="lab-copy-btn" onclick="copyLabError()">Copy error text</button>
-
-      <button class="btn-ghost" style="width:100%; margin-top:18px;" onclick="useThisVoice()">Use this voice everywhere</button>
-      <div class="lab-status" id="lab-active-status"></div>
     </div>
   </div>
 
@@ -473,7 +460,7 @@ function go(view){
   if(view==='fa-setup' || view==='mult-setup'){
     // Warm the model and mic permission while the user is still adjusting settings,
     // so the first question of the session has zero cold-start latency.
-    loadEngineModule(ttsEngine).catch(()=>{});
+    loadPiper().catch(()=>{});
     const settings = view==='fa-setup' ? faSettings : multSettings;
     if(settings.voiceInput) primeMicPermission();
   }
@@ -528,8 +515,20 @@ function primeMicPermission(){
 }
 let recognizer = null;
 let recognitionActive = false;
-let speechSupported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
+// SpeechRecognition also silently fails to get a mic on an insecure origin, so treat that as
+// unsupported too instead of letting it fail confusingly later.
+let speechSupported = (('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window)) && window.isSecureContext;
 
+function micErrorMessage(){
+  return !window.isSecureContext ? 'VOICE INPUT NEEDS HTTPS — USE KEYPAD'
+       : 'VOICE INPUT NOT SUPPORTED — USE KEYPAD';
+}
+function fallBackToKeypad(kind, message){
+  document.getElementById(kind+'-mic-status').classList.remove('on','preparing');
+  document.getElementById(kind+'-answer-label').textContent = message;
+  document.getElementById(kind+'-keypad').classList.add('visible');
+  buildKeypadSimple(kind);
+}
 function ensureRecognizer(){
   if(!speechSupported) return null;
   if(recognizer) return recognizer;
@@ -552,20 +551,29 @@ function ensureRecognizer(){
   recognizer.onerror = (e)=>{
     if(!session) return;
     if(e.error==='no-speech' || e.error==='aborted') return; // benign, onend will restart listening
-    if(e.error==='not-allowed' || e.error==='service-not-allowed'){
-      // Mic permission blocked — stop retrying and fall back to the keypad for this question.
-      session.voiceMode = false;
-      const kind = session.kind;
-      document.getElementById(kind+'-mic-status').classList.remove('on');
-      document.getElementById(kind+'-answer-label').textContent = 'MIC BLOCKED — USE KEYPAD (check browser permissions)';
-      document.getElementById(kind+'-keypad').classList.add('visible');
-      buildKeypadSimple(kind);
-    }
+    // Any other error — permission denied, no microphone hardware found, a transient service
+    // failure — stops retrying (a silent retry loop here is what made "mic not detected" look
+    // like nothing was happening) and falls back to the keypad so the question stays answerable.
+    session.voiceMode = false;
+    const kind = session.kind;
+    const message = e.error==='audio-capture' ? 'NO MICROPHONE FOUND — USE KEYPAD'
+                  : (e.error==='not-allowed' || e.error==='service-not-allowed') ? 'MIC BLOCKED — USE KEYPAD (check browser permissions)'
+                  : 'MIC ERROR — USE KEYPAD';
+    fallBackToKeypad(kind, message);
   };
   recognizer.onend = ()=>{
     recognitionActive=false;
     if(session && !session.resolved && session.voiceMode){
-      try{ recognizer.start(); recognitionActive=true; }catch(e){}
+      try{ recognizer.start(); recognitionActive=true; }
+      catch(err){
+        // Some browsers throw if start() is called immediately after a stop; one short retry
+        // covers that instead of leaving the mic silently off for the rest of the question.
+        setTimeout(()=>{
+          if(session && !session.resolved && session.voiceMode){
+            try{ recognizer.start(); recognitionActive=true; }catch(err2){}
+          }
+        }, 250);
+      }
     }
   };
   return recognizer;
@@ -575,7 +583,16 @@ function startListening(){
   if(!r){ showMicUnsupported(); return; }
   if(!session) return;
   session.voiceMode = true;
-  try{ r.start(); recognitionActive=true; }catch(e){}
+  try{
+    r.start();
+    recognitionActive=true;
+    // Only claim to be "Listening" once the mic has actually been asked to start — showing this
+    // any earlier is exactly what made the mic look broken when it just hadn't engaged yet.
+    const kind = session.kind;
+    document.getElementById(kind+'-mic-status').classList.remove('preparing');
+    document.getElementById(kind+'-mic-status').classList.add('on');
+    document.getElementById(kind+'-mic-text').textContent = 'Listening…';
+  }catch(e){}
 }
 function stopListening(){
   if(session) session.voiceMode = false;
@@ -583,11 +600,7 @@ function stopListening(){
   recognitionActive=false;
 }
 function showMicUnsupported(){
-  const kind = session.kind;
-  document.getElementById(kind+'-mic-status').classList.remove('on');
-  document.getElementById(kind+'-answer-label').textContent = 'VOICE INPUT NOT SUPPORTED — USE KEYPAD';
-  document.getElementById(kind+'-keypad').classList.add('visible');
-  buildKeypadSimple(kind);
+  fallBackToKeypad(session.kind, micErrorMessage());
 }
 
 /* Convert english number words (and mixed digit tokens) to an integer. Returns null if nothing numeric found. */
@@ -619,201 +632,124 @@ function parseSpokenAnswer(transcript){
   return null;
 }
 
-/* ---------- Open-source TTS engines (Voice Lab) ---------- */
-// All engines load lazily from a CDN (bundled ESM) the first time they're used, so the app
-// itself stays a small static site with no build step or bundled model weights.
-const ENGINE_INFO = {
-  piper: {label:'Piper', desc:'Rhasspy Piper (MIT). Lightweight ONNX voices, ~20\u201360MB per voice downloaded once and cached. Clear, slightly synthetic sound, runs on plain WASM \u2014 no WebGPU needed.'},
-  kokoro: {label:'Kokoro', desc:'Kokoro-82M (Apache-2.0). The most natural-sounding of the bunch. Uses WebGPU when the device supports it, and streams sentence-by-sentence so playback starts before the whole clip finishes generating.'},
-  espeak: {label:'eSpeak', desc:'Classic eSpeak formant synthesizer via mespeak.js (GPL). Tiny (~1MB), instant, robotic \u201cSpeak & Spell\u201d voice \u2014 good fallback, not a quality upgrade.'}
-};
-const ENGINE_VOICES = {
-  piper: [
-    {id:'en_US-hfc_female-medium', label:'Female (US)'},
-    {id:'en_US-amy-medium', label:'Amy (US)'},
-    {id:'en_US-ryan-medium', label:'Ryan (US)'},
-    {id:'en_GB-alan-medium', label:'Alan (UK)'}
-  ],
-  kokoro: [
-    {id:'af_heart', label:'Heart (US female)'},
-    {id:'af_bella', label:'Bella (US female)'},
-    {id:'am_michael', label:'Michael (US male)'},
-    {id:'bf_emma', label:'Emma (UK female)'},
-    {id:'bm_george', label:'George (UK male)'}
-  ],
-  espeak: [
-    {id:'en-us', label:'English (US)'},
-    {id:'en-rp', label:'English (UK, RP)'},
-    {id:'en-sc', label:'English (Scottish)'}
-  ]
-};
+/* ---------- Piper TTS ----------
+   Kokoro and eSpeak didn't hold up in practice (heavy/slow, and unreliable), so the app now
+   speaks with a single, well-tested engine: Rhasspy Piper. Its "low" and "medium" quality tiers
+   turn out to be effectively the same download size and speed for English voices, so the real
+   lightweight/fast win here isn't a smaller model, it's never re-running synthesis for a phrase
+   you've already heard (see the persistent cache below) and only ever loading one voice model
+   at a time. */
+const PIPER_VOICES = [
+  {id:'en_US-lessac-medium', label:'Lessac (US) - recommended'},
+  {id:'en_US-amy-medium', label:'Amy (US)'},
+  {id:'en_GB-alan-medium', label:'Alan (UK)'}
+];
+let piperVoiceId = localStorage.getItem('piperVoiceId') || PIPER_VOICES[0].id;
+if(!PIPER_VOICES.some(v=>v.id===piperVoiceId)) piperVoiceId = PIPER_VOICES[0].id;
 
-let ttsEngine = localStorage.getItem('ttsEngine') || 'piper';
-if(!ENGINE_INFO[ttsEngine]) ttsEngine = 'piper'; // migrate away from the removed browser-voice option
-let engineVoiceId = JSON.parse(localStorage.getItem('engineVoiceId')||'{}');
-if(!engineVoiceId.piper) engineVoiceId.piper = ENGINE_VOICES.piper[0].id;
-if(!engineVoiceId.kokoro) engineVoiceId.kokoro = ENGINE_VOICES.kokoro[0].id;
-if(!engineVoiceId.espeak) engineVoiceId.espeak = ENGINE_VOICES.espeak[0].id;
-
-const engineModules = {};   // cached loaded module/instance per engine
-const engineLoading = {};   // in-flight load promises per engine
-
-const MESPEAK_BASE = 'https://cdn.jsdelivr.net/npm/mespeak@2.0.2/';
-const MESPEAK_VOICE_FILES = {'en-us':'voices/en/en-us.json', 'en-rp':'voices/en/en-rp.json', 'en-sc':'voices/en/en-sc.json'};
-
-function loadEngineModule(engine){
-  if(engineModules[engine]) return Promise.resolve(engineModules[engine]);
-  if(engineLoading[engine]) return engineLoading[engine];
-  let p;
-  if(engine==='piper'){
-    // The mintplex-labs fork + esm.sh combo is known to break (broken onnxruntime-web CDN path +
-    // esm.sh polyfill issues). The original @diffusionstudio/vits-web via jsDelivr's +esm avoids both.
-    p = import('https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm')
-      .catch(err=>{ throw new Error('[import] Piper (vits-web) library failed to load from CDN: '+describeErr(err)); })
-      .then(mod=>{
-        const api = (mod && typeof mod.predict==='function') ? mod
-                  : (mod && mod.default && typeof mod.default.predict==='function') ? mod.default
-                  : null;
-        if(!api) throw new Error('[import] Piper module loaded but no predict() function found on it (unexpected export shape).');
-        engineModules[engine]=api; return api;
-      });
-  } else if(engine==='kokoro'){
-    p = import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm')
-      .catch(err=>{ throw new Error('[import] Kokoro library failed to load from CDN: '+describeErr(err)); })
-      .then(async mod=>{
-        const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS);
-        if(!KokoroTTS) throw new Error('[import] Kokoro module loaded but KokoroTTS export was not found.');
-        const modelId = 'onnx-community/Kokoro-82M-v1.0-ONNX';
-        let tts;
-        try{
-          // WebGPU cuts inference time dramatically over WASM when the device supports it;
-          // fall straight back to the quantized WASM path everywhere else (or if WebGPU init fails).
-          if(navigator.gpu){
-            try{ tts = await KokoroTTS.from_pretrained(modelId, {dtype:'fp32', device:'webgpu'}); }
-            catch(gpuErr){ tts = await KokoroTTS.from_pretrained(modelId, {dtype:'q8', device:'wasm'}); }
-          } else {
-            tts = await KokoroTTS.from_pretrained(modelId, {dtype:'q8', device:'wasm'});
-          }
-        }catch(err){
-          throw new Error('[model download/init] Kokoro model failed to load: '+describeErr(err));
-        }
-        const inst = {mod, tts};
-        engineModules[engine] = inst;
-        return inst;
-      });
-  } else if(engine==='espeak'){
-    // The official "espeak-ng" npm package turned out to be compiled Node-only (confirmed by its own
-    // runtime error). mespeak.js is the classic eSpeak-in-the-browser port that's been used in real
-    // browsers for over a decade, so we use that instead for a genuinely working lightweight fallback.
-    p = import('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/+esm')
-      .catch(err=>{ throw new Error('[import] mespeak library failed to load from CDN: '+describeErr(err)); })
-      .then(async mod=>{
-        const meSpeak = (mod && typeof mod.speak==='function') ? mod
-                       : (mod && mod.default && typeof mod.default.speak==='function') ? mod.default
-                       : null;
-        if(!meSpeak) throw new Error('[import] mespeak module loaded but no speak() function found on it.');
-        try{
-          // This build of mespeak's loadConfig() takes a single argument and silently ignores
-          // any callback passed alongside it, so awaiting a callback here hangs forever. Instead,
-          // fire the load and poll isConfigLoaded() (a real, synchronous flag it exposes).
-          meSpeak.loadConfig(MESPEAK_BASE+'src/mespeak_config.json');
-          await waitUntilTrue(()=>meSpeak.isConfigLoaded(), 5000, 25);
-        }catch(err){ throw new Error('[model download/init] mespeak config failed to load: '+describeErr(err)); }
-        engineModules[engine] = meSpeak;
-        return meSpeak;
-      });
-  } else {
-    return Promise.reject(new Error('Unknown engine: '+engine));
-  }
-  engineLoading[engine] = p.finally(()=>{ delete engineLoading[engine]; });
-  return engineLoading[engine];
+let piperModule = null;
+let piperLoading = null;
+function loadPiper(){
+  if(piperModule) return Promise.resolve(piperModule);
+  if(piperLoading) return piperLoading;
+  // The mintplex-labs fork + esm.sh combo is known to break (broken onnxruntime-web CDN path +
+  // esm.sh polyfill issues). The original @diffusionstudio/vits-web via jsDelivr's +esm avoids both.
+  piperLoading = import('https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm')
+    .catch(err=>{ throw new Error('[import] Piper (vits-web) library failed to load from CDN: '+describeErr(err)); })
+    .then(mod=>{
+      const api = (mod && typeof mod.predict==='function') ? mod
+                : (mod && mod.default && typeof mod.default.predict==='function') ? mod.default
+                : null;
+      if(!api) throw new Error('[import] Piper module loaded but no predict() function found on it (unexpected export shape).');
+      piperModule = api;
+      return api;
+    })
+    .finally(()=>{ piperLoading = null; });
+  return piperLoading;
 }
 function describeErr(err){
   if(!err) return 'unknown error';
   return err.message || String(err);
 }
-function waitUntilTrue(predicate, timeoutMs, intervalMs){
-  return new Promise((resolve, reject)=>{
-    const start = Date.now();
-    (function poll(){
-      if(predicate()) return resolve();
-      if(Date.now()-start >= timeoutMs) return reject(new Error('timed out waiting'));
-      setTimeout(poll, intervalMs);
-    })();
-  });
+
+/* ---------- Persistent per-phrase cache (IndexedDB) ----------
+   Piper's own predict() rebuilds its ONNX inference session from scratch on every single call -
+   that's the expensive part of "processing", not the (already browser-cached) model download.
+   The fix is to never ask it twice for the same (voice, text): the raw WAV bytes for every phrase
+   get stashed here, so every later session - even after closing the tab - skips inference
+   entirely and only pays for a fast, native audio decode. */
+const IDB_NAME = 'ttsCache', IDB_STORE = 'clips';
+let idbPromise = null;
+function openIdb(){
+  if(idbPromise) return idbPromise;
+  idbPromise = new Promise((resolve, reject)=>{
+    if(!window.indexedDB){ reject(new Error('indexedDB unavailable')); return; }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  }).catch(err=>{ idbPromise = null; throw err; }); // let a later call retry instead of caching the failure
+  return idbPromise;
+}
+async function idbGetClip(key){
+  try{
+    const db = await openIdb();
+    return await new Promise((resolve,reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = ()=>resolve(req.result || null);
+      req.onerror = ()=>reject(req.error);
+    });
+  }catch(err){ return null; } // this cache is a pure optimization - any failure is just a cache miss
+}
+function idbSetClip(key, arrayBuffer){
+  openIdb().then(db=>{
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(arrayBuffer, key);
+  }).catch(()=>{}); // fire-and-forget: a failed write just means no persistence for this clip
 }
 
 /* ---------- Low-latency playback: Web Audio + prefetch pipeline ----------
    Practice sessions know the whole line-up of things to say before they need to say them
    (the flash-anzan number sequence, the multiplication problem), so instead of synthesizing
-   speech on demand — which is what made Kokoro in particular feel laggy — every phrase is
-   kicked off for synthesis the moment it's known, cached by (engine, voice, text), and played
-   back through a single AudioContext via decoded PCM buffers rather than per-utterance
-   `<audio>` elements. By playback time the buffer is normally already sitting in cache. */
+   speech on demand, every phrase is kicked off for synthesis the moment it's known, cached by
+   (voice, text), and played back through a single AudioContext via decoded PCM buffers rather
+   than per-utterance `<audio>` elements. By playback time the buffer is normally already
+   sitting in the in-memory cache, or failing that, in IndexedDB from a previous session. */
 let audioCtx = null;
 function ensureAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
   return audioCtx;
 }
-function pcmToAudioBuffer(float32, sampleRate){
-  const ctx = ensureAudioCtx();
-  const buf = ctx.createBuffer(1, float32.length, sampleRate);
-  buf.copyToChannel(float32 instanceof Float32Array ? float32 : Float32Array.from(float32), 0);
-  return buf;
-}
 async function blobToAudioBuffer(blob){
   const ctx = ensureAudioCtx();
   return await ctx.decodeAudioData(await blob.arrayBuffer());
 }
 
-const bufferCache = new Map();    // "engine|voice|text" -> AudioBuffer, ready to play instantly
+const bufferCache = new Map();    // "voice|text" -> AudioBuffer, ready to play instantly (this tab)
 const bufferInFlight = new Map(); // same key -> Promise<AudioBuffer>, de-dupes concurrent requests
-function cacheKey(engine, voiceId, text){ return engine+'|'+voiceId+'|'+text; }
+function cacheKey(voiceId, text){ return voiceId+'|'+text; }
 
-async function synthesizeToAudioBuffer(engine, text){
-  if(engine==='kokoro'){
-    const {tts} = await loadEngineModule('kokoro');
-    try{
-      for await(const {audio} of tts.stream(text, {voice: engineVoiceId.kokoro})){
-        return pcmToAudioBuffer(audio.audio, audio.sampling_rate||audio.sample_rate||24000);
-      }
-      throw new Error('Kokoro produced no audio.');
-    }catch(err){ throw new Error('[inference] Kokoro generation failed: '+describeErr(err)); }
-  }
-  if(engine==='piper'){
-    const mod = await loadEngineModule('piper');
-    let blob;
-    try{ blob = await mod.predict({text, voiceId: engineVoiceId.piper}); }
-    catch(err){ throw new Error('[inference] Piper predict() failed: '+describeErr(err)); }
-    return await blobToAudioBuffer(blob);
-  }
-  if(engine==='espeak'){
-    const meSpeak = await loadEngineModule('espeak');
-    const voiceId = engineVoiceId.espeak;
-    const voiceFile = MESPEAK_VOICE_FILES[voiceId] || MESPEAK_VOICE_FILES['en-us'];
-    try{
-      // Reload the selected voice right before speaking (cheap, small JSON) so we never have to
-      // guess mespeak's internal voice-id string format — it just uses whichever voice loaded last.
-      await new Promise((resolve,reject)=>{
-        meSpeak.loadVoice(MESPEAK_BASE+voiceFile, (ok)=> ok ? resolve() : reject(new Error('voice failed to load: '+voiceId)));
-      });
-    }catch(err){ throw new Error('[model download/init] mespeak voice failed to load: '+describeErr(err)); }
-    let bytes;
-    try{ bytes = meSpeak.speak(text, {rawdata:'array'}); }
-    catch(err){ throw new Error('[inference] mespeak synthesis failed: '+describeErr(err)); }
-    if(!bytes || !bytes.length) throw new Error('[inference] mespeak returned no audio data.');
-    return await blobToAudioBuffer(new Blob([new Uint8Array(bytes)], {type:'audio/wav'}));
-  }
-  throw new Error('Unknown engine: '+engine);
+async function synthesizeToAudioBuffer(voiceId, text){
+  const key = cacheKey(voiceId, text);
+  const cached = await idbGetClip(key);
+  if(cached) return await blobToAudioBuffer(new Blob([cached], {type:'audio/wav'}));
+  const mod = await loadPiper();
+  let blob;
+  try{ blob = await mod.predict({text, voiceId}); }
+  catch(err){ throw new Error('[inference] Piper predict() failed: '+describeErr(err)); }
+  const arrBuf = await blob.arrayBuffer();
+  idbSetClip(key, arrBuf.slice(0)); // stash a copy; decodeAudioData may detach the original below
+  return await ensureAudioCtx().decodeAudioData(arrBuf);
 }
 
 /* Cached + de-duped: safe to call for the same phrase from both a prefetch pass and playback. */
-function getAudioBuffer(engine, voiceId, text){
-  const key = cacheKey(engine, voiceId, text);
+function getAudioBuffer(voiceId, text){
+  const key = cacheKey(voiceId, text);
   if(bufferCache.has(key)) return Promise.resolve(bufferCache.get(key));
   if(bufferInFlight.has(key)) return bufferInFlight.get(key);
-  const p = synthesizeToAudioBuffer(engine, text).then(buf=>{
+  const p = synthesizeToAudioBuffer(voiceId, text).then(buf=>{
     bufferCache.set(key, buf);
     bufferInFlight.delete(key);
     return buf;
@@ -829,9 +765,7 @@ async function runWithConcurrency(items, limit, worker){
 }
 /* Fire-and-forget: warms the cache for phrases we already know we'll need to say soon. */
 function prefetchPhrases(list){
-  const engine = ttsEngine;
-  const voiceId = engineVoiceId[engine] || '';
-  runWithConcurrency([...new Set(list)], engine==='kokoro' ? 2 : 3, text=>getAudioBuffer(engine, voiceId, text));
+  runWithConcurrency([...new Set(list)], 3, text=>getAudioBuffer(piperVoiceId, text));
 }
 
 /* Ordered, non-overlapping playback queue. Synthesis for queued items races ahead in the
@@ -877,55 +811,24 @@ const ttsQueue = (function(){
   };
 })();
 
-/* Used everywhere in practice sessions: enqueues a phrase, falling back to Piper if the
-   selected engine fails, so a broken engine never silences practice. */
+/* Used everywhere in practice sessions to speak a phrase through the active Piper voice. */
 function queueSpeak(text){
   if(!text) return;
-  const engine = ttsEngine;
-  const voiceId = engineVoiceId[engine] || '';
-  let p = getAudioBuffer(engine, voiceId, text);
-  if(engine !== 'piper'){
-    p = p.catch(err=>{
-      console.error('['+engine+'] TTS failed, falling back to Piper:', err);
-      return getAudioBuffer('piper', engineVoiceId.piper, text);
-    });
-  }
-  ttsQueue.push(p);
-}
-
-/* Streams long-form text (Voice Lab sample phrases) sentence-by-sentence: each clause is queued
-   for playback as soon as Kokoro finishes generating it, instead of waiting on the whole string. */
-async function streamKokoroToQueue(text){
-  const {tts} = await loadEngineModule('kokoro');
-  const splitPattern = /(?<=[.!?;:])\s+/;
-  let any = false;
-  for await(const {text:chunkText, audio} of tts.stream(text, {voice: engineVoiceId.kokoro, split_pattern: splitPattern})){
-    any = true;
-    const buf = pcmToAudioBuffer(audio.audio, audio.sampling_rate||audio.sample_rate||24000);
-    bufferCache.set(cacheKey('kokoro', engineVoiceId.kokoro, chunkText), buf);
-    ttsQueue.push(buf);
-  }
-  if(!any) throw new Error('[inference] Kokoro produced no audio.');
+  ttsQueue.push(getAudioBuffer(piperVoiceId, text));
 }
 
 /* ---- Voice Lab UI ---- */
 function initVoiceLab(){
-  selectEngine(ttsEngine, true);
-}
-function selectEngine(engine, skipSave){
-  document.querySelectorAll('.engine-tab').forEach(b=>b.classList.toggle('active', b.dataset.engine===engine));
-  document.getElementById('engine-desc').textContent = ENGINE_INFO[engine].desc;
   const sel = document.getElementById('lab-voice-select');
-  sel.innerHTML = (ENGINE_VOICES[engine]||[]).map(v=>
-    `<option value="${v.id}">${v.label}</option>`
-  ).join('');
-  sel.value = engineVoiceId[engine];
-  ttsEngine = engine;
-  if(!skipSave){ document.getElementById('lab-status').textContent=''; document.getElementById('lab-status').className='lab-status'; }
+  sel.innerHTML = PIPER_VOICES.map(v=>`<option value="${v.id}">${v.label}</option>`).join('');
+  sel.value = piperVoiceId;
+  document.getElementById('lab-status').textContent = '';
+  document.getElementById('lab-status').className = 'lab-status';
 }
-function setEngineVoice(val){
-  engineVoiceId[ttsEngine] = val;
-  localStorage.setItem('engineVoiceId', JSON.stringify(engineVoiceId));
+function setPiperVoice(val){
+  piperVoiceId = val;
+  localStorage.setItem('piperVoiceId', piperVoiceId);
+  updateVoiceSummaries();
 }
 async function playSample(){
   const text = document.getElementById('lab-sample-text').value.trim() || 'testing one two three';
@@ -933,29 +836,24 @@ async function playSample(){
   const status = document.getElementById('lab-status');
   const errBox = document.getElementById('lab-error');
   const copyBtn = document.getElementById('lab-copy-btn');
-  status.className='lab-status'; status.textContent = 'Loading model (first time can take a moment)…';
-  errBox.style.display='none'; errBox.textContent=''; copyBtn.style.display='none';
+  status.className = 'lab-status'; status.textContent = 'Loading model (first time can take a moment)...';
+  errBox.style.display = 'none'; errBox.textContent = ''; copyBtn.style.display = 'none';
   btn.disabled = true;
   ttsQueue.clear();
   try{
-    if(ttsEngine==='kokoro'){
-      status.textContent = 'Streaming…';
-      await streamKokoroToQueue(text);
-    } else {
-      const buf = await getAudioBuffer(ttsEngine, engineVoiceId[ttsEngine]||'', text);
-      status.textContent = 'Playing…';
-      ttsQueue.push(buf);
-    }
+    const buf = await getAudioBuffer(piperVoiceId, text);
+    status.textContent = 'Playing...';
+    ttsQueue.push(buf);
     await ttsQueue.whenIdle();
     status.textContent = 'Played'; status.classList.add('ok');
   }catch(err){
     console.error(err);
     const msg = (err && err.message) ? err.message : String(err);
-    status.textContent = 'Failed — see error below';
+    status.textContent = 'Failed - see error below';
     status.classList.add('err');
     errBox.textContent = msg + (err && err.stack ? '\n\n'+err.stack : '');
-    errBox.style.display='block';
-    copyBtn.style.display='block';
+    errBox.style.display = 'block';
+    copyBtn.style.display = 'block';
   }finally{
     btn.disabled = false;
   }
@@ -965,28 +863,20 @@ function copyLabError(){
   if(navigator.clipboard && txt){
     navigator.clipboard.writeText(txt).then(()=>{
       const b = document.getElementById('lab-copy-btn');
-      const old = b.textContent; b.textContent='Copied';
+      const old = b.textContent; b.textContent = 'Copied';
       setTimeout(()=>{ b.textContent = old; }, 1200);
     }).catch(()=>{});
   }
 }
-function useThisVoice(){
-  localStorage.setItem('ttsEngine', ttsEngine);
-  updateEngineSummaries();
-  const el = document.getElementById('lab-active-status');
-  el.textContent = 'Set as the active voice for Flash Anzan & Multiplication';
-  el.className='lab-status ok';
-}
-function updateEngineSummaries(){
-  const label = ENGINE_INFO[ttsEngine] ? ENGINE_INFO[ttsEngine].label : 'Piper';
-  const v = (ENGINE_VOICES[ttsEngine]||[]).find(v=>v.id===engineVoiceId[ttsEngine]);
-  const text = label + (v ? ' — '+v.label : '');
+function updateVoiceSummaries(){
+  const v = PIPER_VOICES.find(v=>v.id===piperVoiceId);
+  const text = 'Piper' + (v ? ' - '+v.label : '');
   const a = document.getElementById('fa-engine-summary');
   const b = document.getElementById('mult-engine-summary');
   if(a) a.textContent = text;
   if(b) b.textContent = text;
 }
-updateEngineSummaries();
+updateVoiceSummaries();
 
 /* ---------- Recent sessions (localStorage) ---------- */
 function saveRecent(entry){
@@ -1053,6 +943,25 @@ function checkLiveAnswer(){
   if(given === session.current.answer){ resolveQuestion(true, given); }
 }
 
+/* Physical keyboard support for the on-screen keypad — typing digits on a laptop is a lot
+   faster than mouse-clicking the keypad buttons one at a time. Mirrors the keypad's own
+   handlers exactly, and only acts while a typed answer is actually being collected. */
+document.addEventListener('keydown', (e)=>{
+  if(!session || session.resolved) return;
+  const settings = session.kind==='fa' ? faSettings : multSettings;
+  if(settings.voiceInput) return; // this question is taking a spoken answer, not typed
+  if(e.key>='0' && e.key<='9'){
+    session.givenInput += e.key;
+    updateAnswerDisplay(session.givenInput);
+    checkLiveAnswer();
+    e.preventDefault();
+  } else if(e.key==='Backspace'){
+    session.givenInput = session.givenInput.slice(0,-1);
+    updateAnswerDisplay(session.givenInput);
+    e.preventDefault();
+  }
+});
+
 /* Sets up the answer phase (keypad or mic) + countdown for the current session. */
 function beginAnswerPhase(timeLimitSeconds){
   const kind = session.kind;
@@ -1069,7 +978,10 @@ function beginAnswerPhase(timeLimitSeconds){
   if(settings.voiceInput){
     labelEl.textContent = 'SAY YOUR ANSWER OUT LOUD';
     keypadEl.classList.remove('visible');
-    micEl.classList.add('on');
+    // Shown as "preparing" (no pulse) until the mic actually engages — claiming "Listening"
+    // before that was misleading and made a working mic look broken.
+    micEl.classList.remove('on'); micEl.classList.add('preparing');
+    document.getElementById(kind+'-mic-text').textContent = 'Preparing microphone…';
     // Wait for the problem readout to actually finish (bounded, in case something stalls)
     // instead of a blind fixed delay — starts the mic as soon as it's safe to, every time.
     Promise.race([ttsQueue.whenIdle(), new Promise(r=>track(setTimeout(r, 2000)))]).then(()=>{
@@ -1077,7 +989,7 @@ function beginAnswerPhase(timeLimitSeconds){
     });
   } else {
     labelEl.textContent = 'TYPE OUT YOUR ANSWER';
-    micEl.classList.remove('on');
+    micEl.classList.remove('on','preparing');
     keypadEl.classList.add('visible');
     buildKeypadSimple(kind);
   }
@@ -1104,7 +1016,7 @@ function resolveQuestion(correct, given){
   const box = document.getElementById(kind+'-answer-box');
   box.classList.add(correct?'correct':'wrong');
   if(!correct){ box.innerHTML = String(session.current.answer); }
-  document.getElementById(kind+'-mic-status').classList.remove('on');
+  document.getElementById(kind+'-mic-status').classList.remove('on','preparing');
   session.results.push({
     correct, given: (given===undefined?null:given), answer: session.current.answer,
     time: ((Date.now()-session.startTime)/1000).toFixed(1),
@@ -1127,7 +1039,7 @@ function startFlashAnzan(fromReplay){
       settings:{...faSettings}
     });
   }
-  if(faSettings.voice) loadEngineModule(ttsEngine).catch(()=>{});
+  if(faSettings.voice) loadPiper().catch(()=>{});
   if(faSettings.voiceInput) primeMicPermission();
   session = {kind:'fa', qIndex:0, total:faSettings.questions, results:[], resolved:true};
   go('fa-practice');
@@ -1199,7 +1111,7 @@ function startMultiplication(fromReplay){
       settings:{...multSettings}
     });
   }
-  if(multSettings.voice) loadEngineModule(ttsEngine).catch(()=>{});
+  if(multSettings.voice) loadPiper().catch(()=>{});
   if(multSettings.voiceInput) primeMicPermission();
   session = {kind:'mult', qIndex:0, total:multSettings.questions, results:[], resolved:true};
   go('mult-practice');
